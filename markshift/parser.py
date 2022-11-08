@@ -26,7 +26,7 @@ class Parser(object):
         self.regex_strong = re.compile('\[\* (.*)\]')
         self.regex_italic = re.compile('\[\/ (.*)\]')
         self.regex_command = re.compile('\[@ (.*)\]')
-        self.regex_math = re.compile('\[\$ (.*)\]')
+        self.regex_math = re.compile('\[\$ (.*?)\]')
 
         self.regex_quote = re.compile('^\[@quote(.*)\]')
         self.regex_code = re.compile('^\[@code (.*)\]')

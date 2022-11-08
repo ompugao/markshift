@@ -1,10 +1,12 @@
 Hello world:
+
+
 	This format is indentation-based.
 	We can write [* bold] text.
 	of course, [/ italic] as well.
 		multiple indentation is available.
 	inline math:
-		you can write a math [$ O(n)] inline.
+		you can write a math [$ O(n)] [$ O^2(n)] inline.
 	asdfasdf
 
 code embeddng (powered by highlight.js):
