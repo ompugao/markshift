@@ -25,16 +25,16 @@ class HtmlRenderer(Renderer):
             # io.write('</div>')
             io.write('</ul>')
         tmp = io.getvalue()
-        # print('render: '+ tmp)
+        print('render: '+ tmp)
         return tmp
 
     def render_strong(self, elem):
         io = StringIO()
-        io.write('<strong>')
+        io.write('<b>')
         io.write(elem.content)
         for el in elem.child_elements:
             io.write(self.render(el))
-        io.write('</strong>')
+        io.write('</b>')
         return io.getvalue()
 
     def render_italic(self, elem):
@@ -44,6 +44,22 @@ class HtmlRenderer(Renderer):
         for el in elem.child_elements:
             io.write(self.render(el))
         io.write('</i>')
+        return io.getvalue()
+
+    def render_math(self, elem):
+        io = StringIO()
+        if elem.inline == True:
+            # io.write(f'<div id={elem.uid}/>')
+            io.write('$$ ')
+            io.write(elem.content)
+            io.write(' $$')
+            # io.write('</div>')
+        else:
+            io.write('[ ')
+            for line in elem.child_lines:
+                io.write(self.render(line))
+                io.write('\n')
+            io.write(' ]')
         return io.getvalue()
 
     def render_raw(self, elem):

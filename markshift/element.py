@@ -36,6 +36,15 @@ class ItalicElement(Element):
     def render(self,):
         return self.renderer.render_italic(self)
 
+class MathElement(Element):
+    def __init__(self, parent, content, renderer, uid, inline=False):
+        super().__init__(parent, content, renderer)
+        self.uid = uid
+        self.inline = inline
+
+    def render(self,):
+        return self.renderer.render_math(self)
+
 class QuoteElement(Element):
     def __init__(self, parent, content, renderer):
         super().__init__(parent, content, renderer)
