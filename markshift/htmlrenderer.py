@@ -18,9 +18,7 @@ class HtmlRenderer(Renderer):
             for line in elem.child_lines:
                 # io.write(line.render() + '<br/>')
                 l = line.render() 
-                print('l: '+ l)
                 if l == '':
-                    print('empty!')
                     io.write('<li class="empty-line">' + l + '<br/></li>')
                 else:
                     io.write('<li>' + l + '</li>')
