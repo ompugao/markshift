@@ -55,11 +55,11 @@ class HtmlRenderer(Renderer):
             io.write(' $$')
             # io.write('</div>')
         else:
-            io.write('[ ')
+            io.write('[[ ')
             for line in elem.child_lines:
                 io.write(self.render(line))
                 io.write('\n')
-            io.write(' ]')
+            io.write(' ]]')
         return io.getvalue()
 
     def render_raw(self, elem):

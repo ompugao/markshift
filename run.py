@@ -1,7 +1,7 @@
-import markshift.parser
+import markshift
 import markshift.htmlrenderer
 renderer = markshift.htmlrenderer.HtmlRenderer()
-parser = markshift.parser.Parser(renderer)
+parser = markshift.Parser(renderer)
 with open('sample/input.ms', 'r') as f:
     tree = parser.parse([l.rstrip('\n') for l in f.readlines()])
     # tree = parser.parse(filter(lambda l: len(l) > 0, [l.rstrip() for l in f.readlines()]))
@@ -26,7 +26,7 @@ with open('sample/output.html', 'w') as f:
                       delimiters: [
                           {left: '$$', right: '$$', display: false},
                           {left: '$', right: '$', display: false},
-                          {left: '\\[', right: '\\]', display: true}
+                          {left: '\\[\\[', right: '\\]\\]', display: true}
                       ],
                       // • rendering keys, e.g.:
                       throwOnError : false
