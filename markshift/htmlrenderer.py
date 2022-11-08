@@ -45,3 +45,12 @@ class HtmlRenderer(Renderer):
     def render_raw(self, elem):
         # TODO html escape
         return html.escape(elem.content)
+
+    def render_quote(self, elem):
+        io = StringIO()
+        io.write('<blockquote>')
+        io.write(elem.content)
+        for line in elem.child_lines:
+            io.write(self.render(line) + '<br/>')
+        io.write('</blockquote>')
+        return io.getvalue()

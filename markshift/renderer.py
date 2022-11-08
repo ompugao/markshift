@@ -20,3 +20,7 @@ class Renderer(metaclass=ABCMeta):
     @abstractmethod
     def render_raw(self, elem):
         raise NotImplementedError()
+
+    @abstractmethod
+    def render_quote(self, elem):
+        raise NotImplementedError()

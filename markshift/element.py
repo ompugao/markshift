@@ -35,3 +35,10 @@ class ItalicElement(Element):
 
     def render(self,):
         return self.renderer.render_italic(self)
+
+class QuoteElement(Element):
+    def __init__(self, parent, content, renderer):
+        super().__init__(parent, content, renderer)
+
+    def render(self,):
+        return self.renderer.render_quote(self)
