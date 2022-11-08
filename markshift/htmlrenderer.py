@@ -17,7 +17,13 @@ class HtmlRenderer(Renderer):
             io.write('<ul>')
             for line in elem.child_lines:
                 # io.write(line.render() + '<br/>')
-                io.write('<li>' + line.render() + '</li>')
+                l = line.render() 
+                print('l: '+ l)
+                if l == '':
+                    print('empty!')
+                    io.write('<li class="empty-line">' + l + '<br/></li>')
+                else:
+                    io.write('<li>' + l + '</li>')
             # io.write('</div>')
             io.write('</ul>')
         tmp = io.getvalue()
@@ -53,4 +59,15 @@ class HtmlRenderer(Renderer):
         for line in elem.child_lines:
             io.write(self.render(line) + '<br/>')
         io.write('</blockquote>')
+        return io.getvalue()
+
+    def render_code(self, elem):
+        io = StringIO()
+        io.write('<pre><code class="')
+        io.write(elem.content)
+        io.write('">')
+        for line in elem.child_lines:
+            io.write(self.render(line))
+            io.write('\n')
+        io.write('</code></pre>')
         return io.getvalue()

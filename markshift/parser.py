@@ -26,6 +26,7 @@ class Parser(object):
         self.regex_italic = re.compile('\[\/ (.*)\]')
         self.regex_command = re.compile('\[@ (.*)\]')
         self.regex_quote = re.compile('^\[@quote(.*)\]')
+        self.regex_code = re.compile('^\[@code (.*)\]')
         self.regex_raw = re.compile('``(.*)``')
 
     def parse(self, lines):
@@ -48,23 +49,40 @@ class Parser(object):
         line_elem = Element(parent=weakref.proxy(parent),
                             renderer=self.renderer)
 
-        print(depth, line)
-        m = self.regex_quote.match(line[depth:])
-        if m is not None:
-            if self.state.parse_state != ParseState.QUOTE or self.state.indent != depth:
-                self.state = State(ParseState.QUOTE, depth + 1)
-                quote_elem = QuoteElement(parent=weakref.proxy(line_elem),
-                                          content='',
-                                          renderer=self.renderer)
-                line_elem.child_elements.append(quote_elem)
-                parent.child_lines.append(line_elem)
-                return
-        elif self.state.parse_state == ParseState.QUOTE and self.state.indent == depth:
+        # print(depth, line)
+        mquote = self.regex_quote.match(line[depth:])
+        if mquote is not None:
+            self.state = State(ParseState.QUOTE, depth + 1)
+            quote_elem = QuoteElement(parent=weakref.proxy(line_elem),
+                                      content='',
+                                      renderer=self.renderer)
+            line_elem.child_elements.append(quote_elem)
+            parent.child_lines.append(line_elem)
+            return
+
+        mcode = self.regex_code.match(line[depth:])
+        if mcode is not None:
+            self.state = State(ParseState.CODE, depth + 1)
+            code_elem = CodeElement(parent=weakref.proxy(line_elem),
+                                      content=mcode.group(1),
+                                      renderer=self.renderer)
+            line_elem.child_elements.append(code_elem)
+            parent.child_lines.append(line_elem)
+            return
+
+        if self.state.parse_state == ParseState.QUOTE and self.state.indent == depth:
             quoteelem = parent.child_elements[-1]
             assert(type(quoteelem) == QuoteElement)
             quoteelem.child_lines.append(self._parse_str(quoteelem, line[depth:]))
             return
-        elif (self.state.parse_state == ParseState.QUOTE and self.state.indent != depth)\
+        elif self.state.parse_state == ParseState.CODE and self.state.indent == depth:
+            codeelem = parent.child_elements[-1]
+            assert(type(codeelem) == CodeElement)
+            codeelem.child_lines.append(Element(parent=weakref.proxy(codeelem),
+                                                content=line[depth:],
+                                                renderer=self.renderer))
+            return
+        elif (self.state.parse_state != ParseState.LINE and self.state.indent != depth)\
             or self.state.parse_state == ParseState.LINE:
             self.state = State(ParseState.LINE, depth)
             line_elem.child_elements.append(

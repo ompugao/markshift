@@ -8,4 +8,19 @@ with open('sample/input.ms', 'r') as f:
 # from IPython.terminal import embed; ipshell=embed.InteractiveShellEmbed(config=embed.load_default_config())(local_ns=locals())
 
 with open('sample/output.html', 'w') as f:
+    f.write("""
+            <head>
+            <link rel="stylesheet"
+                  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+            <script>hljs.highlightAll();</script>
+            <style>
+            .empty-line{
+                list-style-type: none;
+            }
+            </style>
+            </head>
+            <body>
+            """)
     f.write(tree.render())
+    f.write("</body>")

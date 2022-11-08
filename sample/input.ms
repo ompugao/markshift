@@ -12,7 +12,15 @@ testtest
 	結構いい感じでは？
 	[@quote]
 		hoge
-		fuga
+		[* bold quote]
 		piyo
+	[@quote]
+		new quote
+		bra bra brah
 
-	空行がむずかしい
+[@code python]
+	import numpy as np
+	print('hoge')
+	print(np.zeros(4))
+
+空行がむずかしい

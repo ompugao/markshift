@@ -42,3 +42,10 @@ class QuoteElement(Element):
 
     def render(self,):
         return self.renderer.render_quote(self)
+
+class CodeElement(Element):
+    def __init__(self, parent, content, renderer):
+        super().__init__(parent, content, renderer)
+
+    def render(self,):
+        return self.renderer.render_code(self)
