@@ -18,9 +18,11 @@ testtest
 		new quote
 		bra bra brah
 
+code埋め込み:
 [@code python]
 	import numpy as np
-	print('hoge')
+	def print_func(arg):
+		print(arg)
+	print_func('hoge')
 	print(np.zeros(4))
 
-空行がむずかしい

@@ -10,9 +10,8 @@ with open('sample/input.ms', 'r') as f:
 with open('sample/output.html', 'w') as f:
     f.write("""
             <head>
-            <link rel="stylesheet"
-                  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+            <link rel="stylesheet" href="../highlightjs/styles/github.min.css">
+            <script src="../highlightjs/highlight.min.js"></script>
             <script>hljs.highlightAll();</script>
             <style>
             .empty-line{
@@ -24,3 +23,9 @@ with open('sample/output.html', 'w') as f:
             """)
     f.write(tree.render())
     f.write("</body>")
+
+"""
+            <link rel="stylesheet"
+                  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+"""

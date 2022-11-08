@@ -42,8 +42,8 @@ class Parser(object):
 
     def _parse_line(self, root, line):
         depth = self.regex_indent.match(line).end()
-        # if len(line) == 0:
-        #     depth = self.state.indent
+        if self.state.parse_state != ParseState.LINE and depth > self.state.indent:
+            depth = self.state.indent
         parent = self._find_parent_line(root, depth)
 
         line_elem = Element(parent=weakref.proxy(parent),
