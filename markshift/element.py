@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import weakref
+from io import StringIO
 
 class Element(object):
     def __init__(self, parent = None, content = '', renderer = None):
@@ -12,6 +13,9 @@ class Element(object):
         self.renderer = renderer
 
     def render(self,):
+        """
+        generic render
+        """
         return self.renderer.render(self)
 
 class RawElement(Element):

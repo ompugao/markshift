@@ -1,6 +1,4 @@
 Hello world:
-
-
 	This format is indentation-based.
 	We can write [* bold] text.
 	of course, [/ italic] as well.

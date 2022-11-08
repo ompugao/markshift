@@ -122,6 +122,9 @@ class Parser(object):
         return self._find_parent_line(parent.child_lines[-1], depth - 1)
 
     def _parse_str(self, parent, s):
+        if len(s) == 0:
+            return []
+
         elms = []
         # TODO
         # self.regex_raw.match(s)
@@ -166,7 +169,6 @@ class Parser(object):
             elms.extend(self._parse_str(parent, s[m.end():]))
             return elms
 
-
         return [Element(parent=weakref.proxy(parent),
-                       content=s,
-                       renderer=self.renderer)]
+                        content=s,
+                        renderer=self.renderer)]

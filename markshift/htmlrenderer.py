@@ -25,7 +25,7 @@ class HtmlRenderer(Renderer):
             # io.write('</div>')
             io.write('</ul>')
         tmp = io.getvalue()
-        print('render: '+ tmp)
+        # print('render: '+ tmp)
         return tmp
 
     def render_strong(self, elem):
@@ -33,7 +33,7 @@ class HtmlRenderer(Renderer):
         io.write('<b>')
         io.write(elem.content)
         for el in elem.child_elements:
-            io.write(self.render(el))
+            io.write(el.render())
         io.write('</b>')
         return io.getvalue()
 
@@ -42,7 +42,7 @@ class HtmlRenderer(Renderer):
         io.write('<i>')
         io.write(elem.content)
         for el in elem.child_elements:
-            io.write(self.render(el))
+            io.write(el.render())
         io.write('</i>')
         return io.getvalue()
 
@@ -57,7 +57,7 @@ class HtmlRenderer(Renderer):
         else:
             io.write('[[ ')
             for line in elem.child_lines:
-                io.write(self.render(line))
+                io.write(line.render())
                 io.write('\n')
             io.write(' ]]')
         return io.getvalue()
@@ -71,7 +71,7 @@ class HtmlRenderer(Renderer):
         io.write('<blockquote>')
         io.write(elem.content)
         for line in elem.child_lines:
-            io.write(self.render(line) + '<br/>')
+            io.write(line.render() + '<br/>')
         io.write('</blockquote>')
         return io.getvalue()
 
@@ -81,7 +81,7 @@ class HtmlRenderer(Renderer):
         io.write(elem.content)
         io.write('">')
         for line in elem.child_lines:
-            io.write(self.render(line))
+            io.write(line.render())
             io.write('\n')
         io.write('</code></pre>')
         return io.getvalue()
