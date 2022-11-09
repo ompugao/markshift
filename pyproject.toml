@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0",  "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "markshift"
+description ="Indentation oriented markup language and its parser"
+# readme = "README.rst"
+requires-python = ">=3.7,<4"
+keywords = []
+license = {text = "BSD 3-Clause License"}
+classifiers = [
+]
+dependencies = [
+	"lark[regex]",
+	"click"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = ["pysen", "flake8==4.0.1", "isort==5.10.1", "black==21.4b2", "mypy==0.910", "ipython"]
+
+[project.scripts]
+markshift_cli="markshift.cli.main:main"

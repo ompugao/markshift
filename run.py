@@ -1,7 +1,8 @@
 import markshift
+import markshift.parser
 import markshift.htmlrenderer
 renderer = markshift.htmlrenderer.HtmlRenderer()
-parser = markshift.Parser(renderer, use_tokenizer=True)
+parser = markshift.parser.Parser(renderer, use_tokenizer=True)
 with open('sample/input.ms', 'r') as f:
     tree = parser.parse([l.rstrip('\n') for l in f.readlines()])
     # tree = parser.parse(filter(lambda l: len(l) > 0, [l.rstrip() for l in f.readlines()]))
