@@ -10,6 +10,14 @@ class Renderer(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def render_line(self, elem):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def render_text(self, elem):
+        raise NotImplementedError()
+
+    @abstractmethod
     def render_strong(self, elem):
         raise NotImplementedError()
 

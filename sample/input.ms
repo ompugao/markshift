@@ -4,8 +4,8 @@ Hello world:
 	of course, [/ italic] as well.
 		multiple indentation is available.
 	inline math:
-		you can write a math [$ O(n)] [$ O^2(n)] inline.
-	asdfasdf
+		you can write a math [$ O(n)$] [$ O^2(n)$] inline.
+	[/* bold italic symbols]
 
 code embeddng (powered by highlight.js):
 	[@code python]

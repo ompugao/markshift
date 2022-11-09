@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .element import *
+from .tokenizer import tokenizer, ElementTransformer
 from enum import Enum
 import re
 import uuid
@@ -18,7 +19,7 @@ class State(object):
         self.indent = indent
 
 class Parser(object):
-    def __init__(self, renderer):
+    def __init__(self, renderer, use_tokenizer=False):
         self.state = State(ParseState.LINE, 0)
 
         self.renderer = renderer
@@ -26,12 +27,16 @@ class Parser(object):
         self.regex_strong = re.compile('\[\* (.*)\]')
         self.regex_italic = re.compile('\[\/ (.*)\]')
         self.regex_command = re.compile('\[@ (.*)\]')
-        self.regex_math = re.compile('\[\$ (.*?)\]')
+        self.regex_math = re.compile('\[\$ (.*?)\$\]')
 
         self.regex_quote = re.compile('^\[@quote(.*)\]')
         self.regex_code = re.compile('^\[@code (.*)\]')
         self.regex_math_command = re.compile('^\[@math(.*)\]')
         self.regex_raw = re.compile('``(.*)``')
+
+        self.use_tokenizer = use_tokenizer
+        self.tokenizer = tokenizer
+        self.transformer = ElementTransformer(renderer)
 
     def parse(self, lines):
         root_element = Element(renderer=self.renderer)
@@ -50,7 +55,7 @@ class Parser(object):
             depth = self.state.indent
         parent = self._find_parent_line(root, depth)
 
-        line_elem = Element(parent=weakref.proxy(parent),
+        line_elem = LineElement(parent=weakref.proxy(parent),
                             renderer=self.renderer)
 
         # print(depth, line)
@@ -58,7 +63,6 @@ class Parser(object):
         if mquote is not None:
             self.state = State(ParseState.QUOTE, depth + 1)
             quote_elem = QuoteElement(parent=weakref.proxy(line_elem),
-                                      content='',
                                       renderer=self.renderer)
             line_elem.child_elements.append(quote_elem)
             parent.child_lines.append(line_elem)
@@ -68,7 +72,7 @@ class Parser(object):
         if mcode is not None:
             self.state = State(ParseState.CODE, depth + 1)
             code_elem = CodeElement(parent=weakref.proxy(line_elem),
-                                      content=mcode.group(1),
+                                      lang=mcode.group(1),
                                       renderer=self.renderer)
             line_elem.child_elements.append(code_elem)
             parent.child_lines.append(line_elem)
@@ -94,14 +98,14 @@ class Parser(object):
         elif self.state.parse_state == ParseState.CODE and self.state.indent == depth:
             codeelem = parent.child_elements[-1]
             assert(type(codeelem) == CodeElement)
-            codeelem.child_lines.append(Element(parent=weakref.proxy(codeelem),
+            codeelem.child_lines.append(TextElement(parent=weakref.proxy(codeelem),
                                                 content=line[depth:],
                                                 renderer=self.renderer))
             return
         elif self.state.parse_state == ParseState.MATH and self.state.indent == depth:
             mathelem = parent.child_elements[-1]
             assert(type(mathelem) == MathElement)
-            mathelem.child_lines.append(Element(parent=weakref.proxy(mathelem),
+            mathelem.child_lines.append(TextElement(parent=weakref.proxy(mathelem),
                                                 content=line[depth:],
                                                 renderer=self.renderer))
             return
@@ -121,9 +125,14 @@ class Parser(object):
             raise ValueError(f'Invalid indent')
         return self._find_parent_line(parent.child_lines[-1], depth - 1)
 
+    def _parse_str_lark(self, parant, s):
+        return [self.transformer.transform(tokenizer.parse(s))]
+
     def _parse_str(self, parent, s):
         if len(s) == 0:
             return []
+        if self.use_tokenizer:
+            return self._parse_str_lark(parent, s)
 
         elms = []
         # TODO
@@ -133,7 +142,6 @@ class Parser(object):
             elms.extend(self._parse_str(parent, s[:m.start()]))
 
             el = StrongElement(parent=weakref.proxy(parent),
-                               content='',
                                renderer=self.renderer)
             el.child_elements.extend(self._parse_str(el, m.group(1)))
             elms.append(el)
@@ -146,7 +154,6 @@ class Parser(object):
             elms.extend(self._parse_str(parent, s[:m.start()]))
 
             el = ItalicElement(parent=weakref.proxy(parent),
-                               content='',
                                renderer=self.renderer)
             el.child_elements.extend(self._parse_str(el, m.group(1)))
             elms.append(el)
@@ -169,6 +176,6 @@ class Parser(object):
             elms.extend(self._parse_str(parent, s[m.end():]))
             return elms
 
-        return [Element(parent=weakref.proxy(parent),
+        return [TextElement(parent=weakref.proxy(parent),
                         content=s,
                         renderer=self.renderer)]

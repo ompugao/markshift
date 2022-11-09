@@ -9,7 +9,6 @@ class HtmlRenderer(Renderer):
 
     def render(self, elem):
         io = StringIO()
-        io.write(elem.content)
         for el in elem.child_elements:
             io.write(el.render())
         if len(elem.child_lines) > 0:
@@ -28,10 +27,35 @@ class HtmlRenderer(Renderer):
         # print('render: '+ tmp)
         return tmp
 
+    def render_line(self, elem):
+        io = StringIO()
+        for el in elem.child_elements:
+            io.write(el.render())
+        if len(elem.child_lines) > 0:
+            # io.write('<div class=tab>')
+            io.write('<ul>')
+            for line in elem.child_lines:
+                # io.write(line.render() + '<br/>')
+                l = line.render() 
+                if l == '':
+                    io.write('<li class="empty-line">' + l + '<br/></li>')
+                else:
+                    io.write('<li>' + l + '</li>')
+            # io.write('</div>')
+            io.write('</ul>')
+        return io.getvalue()
+
+    def render_link(self, elem):
+        io = StringIO()
+        io.write(f'<a href="{elem.link}">{elem.content}</a>')
+        return io.getvalue()
+
+    def render_text(self, elem):
+        return elem.content
+
     def render_strong(self, elem):
         io = StringIO()
         io.write('<b>')
-        io.write(elem.content)
         for el in elem.child_elements:
             io.write(el.render())
         io.write('</b>')
@@ -40,7 +64,6 @@ class HtmlRenderer(Renderer):
     def render_italic(self, elem):
         io = StringIO()
         io.write('<i>')
-        io.write(elem.content)
         for el in elem.child_elements:
             io.write(el.render())
         io.write('</i>')
@@ -69,7 +92,6 @@ class HtmlRenderer(Renderer):
     def render_quote(self, elem):
         io = StringIO()
         io.write('<blockquote>')
-        io.write(elem.content)
         for line in elem.child_lines:
             io.write(line.render() + '<br/>')
         io.write('</blockquote>')
@@ -78,10 +100,15 @@ class HtmlRenderer(Renderer):
     def render_code(self, elem):
         io = StringIO()
         io.write('<pre><code class="')
-        io.write(elem.content)
+        io.write(elem.lang)
         io.write('">')
         for line in elem.child_lines:
             io.write(line.render())
             io.write('\n')
         io.write('</code></pre>')
+        return io.getvalue()
+
+    def render_img(self, elem):
+        io = StringIO()
+        io.write(f'<img src="{elem.src}" alt="{elem.alt}"/>')
         return io.getvalue()
