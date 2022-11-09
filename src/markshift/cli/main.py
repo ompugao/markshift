@@ -47,6 +47,9 @@ def main(inputfile, outputfile):
     .empty-line{
         list-style-type: none;
     }
+    .image {
+        vertical-align: top; 
+    }
     </style>
     </head>
     <body>

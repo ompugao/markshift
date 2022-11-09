@@ -111,5 +111,5 @@ class HtmlRenderer(Renderer):
 
     def render_img(self, elem):
         io = StringIO()
-        io.write(f'<img src="{elem.src}" alt="{elem.alt}"/>')
+        io.write(f'<img class="image" src="{elem.src}" alt="{elem.alt}"/>')
         return io.getvalue()
