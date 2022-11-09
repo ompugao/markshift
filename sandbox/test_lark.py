@@ -9,7 +9,7 @@ except NameError:
     pass
 
 
-calc_grammar = """
+grammar = """
     ?start: command
           | statement
 
@@ -21,13 +21,17 @@ calc_grammar = """
          | expr_url_title
          | expr_title_url
          | expr_builtin_symbols
+         | expr_math
     ?expr_url_only: "[" URL "]"
     ?expr_url_title: "[" URL WS_INLINE+ WWORD "]"
     ?expr_title_url: "[" WWORD WS_INLINE+ URL "]"
-    ?expr_builtin_symbols: "[" BUILTIN_SYMBOLS+ WS_INLINE statement "]"
-    ?raw_sentence: [WS_INLINE|WWORD]*
+    ?expr_builtin_symbols: "[" BUILTIN_NESTABLE_SYMBOLS+ WS_INLINE statement "]"
+    ?expr_math: "[$" WS_INLINE latex_math_expr "$]"
 
-    BUILTIN_SYMBOLS: "*" | "/"
+    ?raw_sentence: NON_SQB_WORD+
+    ?latex_math_expr: (WORD | NUMBER | WS_INLINE | MATH_SYMBOL)+
+
+    BUILTIN_NESTABLE_SYMBOLS: "*" | "/"
     LCASE_LETTER: "a".."z"
     UCASE_LETTER: "A".."Z"
     HIRAGANA_LETTER: /\p{Hiragana}/
@@ -37,8 +41,14 @@ calc_grammar = """
     WORD: LETTER+
     WLETTER: UCASE_LETTER | LCASE_LETTER | HIRAGANA_LETTER | KATAKANA_LETTER | KANJI_LETTER
     WWORD: WLETTER+
+
+    MATH_SYMBOL: /[^\p{L}\d\s]/u
+
+    NONSQB: /[^\[\]]/
+    NON_SQB_WORD: NONSQB+
     URL: /\w+:\/\/[\w\/:%#\$&\?\(\)~\.=\+\-]+/
     %import common.WS_INLINE
+    %import common.NUMBER
 """
 
 
@@ -61,7 +71,7 @@ class CalculateTree(Transformer):
             raise Exception("Variable not found: %s" % name)
 
 
-parser = Lark(calc_grammar, parser='earley', keep_all_tokens=True, regex=True, g_regex_flags=1, debug=True) #, transformer=CalculateTree())
+parser = Lark(grammar, parser='earley', keep_all_tokens=True, regex=True, g_regex_flags=1, debug=True) #, transformer=CalculateTree())
 
     #'lalr' 'earley' 'cyk'
 def main():
@@ -87,6 +97,9 @@ def test():
     print(parser.parse("[/ [https://google.com google]]"))
     print(parser.parse(" [google https://google.com/]"))
     print(parser.parse("こういう文章も[google https://google.com/]書けるんです"))
+    print(parser.parse("URLの入れ子もできるかな?[*/ [google https://google.com/]] "))
+    print(parser.parse("mathもできる？ [$ sum_{i=0}^{10} a_i $] "))
+    print(parser.parse("できてそう [* [$ [O(n)] $]]"))
 
 
 if __name__ == '__main__':
