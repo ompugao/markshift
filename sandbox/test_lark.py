@@ -22,11 +22,17 @@ grammar = """
          | expr_title_url
          | expr_builtin_symbols
          | expr_math
+         | expr_img
     ?expr_url_only: "[" URL "]"
     ?expr_url_title: "[" URL WS_INLINE+ WWORD "]"
     ?expr_title_url: "[" WWORD WS_INLINE+ URL "]"
     ?expr_builtin_symbols: "[" BUILTIN_NESTABLE_SYMBOLS+ WS_INLINE statement "]"
     ?expr_math: "[$" WS_INLINE latex_math_expr "$]"
+    ?expr_img: "[@img" WS_INLINE img_path "]"
+             | "[@img" WS_INLINE img_path WS_INLINE alt_img"]"
+             | "[@img" WS_INLINE alt_img WS_INLINE img_path"]"
+    ?img_path: URL | FILE_PATH
+    ?alt_img: ESCAPED_STRING
 
     ?raw_sentence: NON_SQB_WORD+
     ?latex_math_expr: (WORD | NUMBER | WS_INLINE | MATH_SYMBOL)+
@@ -44,10 +50,13 @@ grammar = """
 
     MATH_SYMBOL: /[^\p{L}\d\s]/u
 
+    FILE_PATH: ((?:[^/]*/)*)(.*)
+
     NONSQB: /[^\[\]]/
     NON_SQB_WORD: NONSQB+
     URL: /\w+:\/\/[\w\/:%#\$&\?\(\)~\.=\+\-]+/
     %import common.WS_INLINE
+    %import common.ESCAPED_STRING
     %import common.NUMBER
 """
 
