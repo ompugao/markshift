@@ -17,6 +17,7 @@ class HtmlRenderer(Renderer):
             for line in elem.child_lines:
                 # io.write(line.render() + '<br/>')
                 l = line.render() 
+
                 if l == '':
                     io.write('<li class="empty-line">' + l + '<br/></li>')
                 else:
@@ -24,7 +25,6 @@ class HtmlRenderer(Renderer):
             # io.write('</div>')
             io.write('</ul>')
         tmp = io.getvalue()
-        # print('render: '+ tmp)
         return tmp
 
     def render_line(self, elem):

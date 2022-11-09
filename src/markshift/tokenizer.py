@@ -24,7 +24,7 @@ grammar = """
          | expr_math
          | expr_img
 
-    ?expr_url_only: "[" url "]"
+    ?expr_url_only: "[" url "]" -> expr_url_only
     ?expr_url_title: "[" url space_sep url_title "]"
     ?expr_title_url: "[" url_title space_sep url "]"
     ?url: URL
@@ -138,7 +138,7 @@ class ElementTransformer(Transformer):
         return url_title.value
 
     def expr_url_only(self, url):
-        return LinkElement(parent=None, content='', link=url, renderer=self.renderer)
+        return LinkElement(parent=None, content=url, link=url, renderer=self.renderer)
 
     def expr_url_title(self, url, title):
         return LinkElement(parent=None, content=title, link=url, renderer=self.renderer)
