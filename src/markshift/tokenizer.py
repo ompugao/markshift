@@ -21,6 +21,7 @@ grammar = """
          | expr_url_title
          | expr_title_url
          | expr_builtin_symbols
+         | expr_code_inline
          | expr_math
          | expr_img
 
@@ -32,6 +33,7 @@ grammar = """
 
     ?expr_builtin_symbols: "[" symbols_applied space_sep statement "]"
     ?symbols_applied: BUILTIN_NESTABLE_SYMBOLS+ -> symbols
+    ?expr_code_inline: "[`" code_inline "`]" -> expr_code_inline
     ?expr_math: "[$" space_sep latex_math_expr "$]"
     ?expr_img: "[@img" space_sep img_path "]" -> expr_img_path_only
              | "[@img" space_sep img_path space_sep alt_img "]" -> expr_img_path_alt
@@ -40,6 +42,7 @@ grammar = """
     ?alt_img: ESCAPED_STRING
 
     ?raw_sentence: (NON_SQB_WORD|WS_INLINE)+ -> raw_sentence
+    ?code_inline: /.+?(?=`\])/ -> code_inline
     ?latex_math_expr: /.+?(?=\$\])/ -> latex_math_expr
     // match other than "$]"
 
@@ -89,7 +92,7 @@ class ElementTransformer(Transformer):
         elif command_name == 'code':
             if len(params) > 1:
                 raise ValueError('too many parameters for code')
-            return CodeElement(parent=None, lang=params[0], renderer=self.renderer)
+            return CodeElement(parent=None, lang=params[0], content='', inline=False, renderer=self.renderer)
         elif command_name == 'math':
             return MathElement(parent=None, content=params[0], renderer=self.renderer, inline=False)
         return 
@@ -136,6 +139,12 @@ class ElementTransformer(Transformer):
 
     def url_title(self, url_title):
         return url_title.value
+
+    def expr_code_inline(self, code):
+        return CodeElement(parent=None, lang=None, content=code, inline=True, renderer=self.renderer)
+
+    def code_inline(self, s):
+        return s.value
 
     def expr_url_only(self, url):
         return LinkElement(parent=None, content=url, link=url, renderer=self.renderer)

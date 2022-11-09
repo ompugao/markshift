@@ -1,5 +1,6 @@
 Hello world:
 	This format is indentation-based.
+	inline code: [`  hogehoge[]]   `]
 	We can write [* bold] text.
 	of course, [/ italic] as well.
 		multiple indentation is available.
@@ -8,9 +9,10 @@ Hello world:
 	[/* bold italic symbols]
 
 Links:
-	you can embed images: [@img https://via.placeholder.com/150].
-	you can set alt text: [@img https://via.placeholder.com/150 "this is an alt text"].
-		like this as well: [@img "this is also an alt text" https://via.placeholder.com/150].
+	you can embed images: [@img https://via.placeholder.com/50].
+	you can set alt text: [@img https://via.placeholder.com/50 "this is an alt text"].
+		like this as well: [@img "this is also an alt text" https://via.placeholder.com/50].
+		[@img https://via.placeholder.com/50]
 	url: [google https://google.com]
 	url2: [https://google.com google]
 	url3: [https://google.co.jp/]

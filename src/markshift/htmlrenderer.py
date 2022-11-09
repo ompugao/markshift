@@ -86,10 +86,6 @@ class HtmlRenderer(Renderer):
             io.write(' ]]')
         return io.getvalue()
 
-    def render_raw(self, elem):
-        # TODO html escape
-        return html.escape(elem.content)
-
     def render_quote(self, elem):
         io = StringIO()
         io.write('<blockquote>')
@@ -100,13 +96,18 @@ class HtmlRenderer(Renderer):
 
     def render_code(self, elem):
         io = StringIO()
-        io.write('<pre><code class="')
-        io.write(elem.lang)
-        io.write('">')
-        for line in elem.child_lines:
-            io.write(line.render())
-            io.write('\n')
-        io.write('</code></pre>')
+        if elem.inline:
+            io.write('<code>')
+            io.write(html.escape(elem.content))
+            io.write('</code>')
+        else:
+            io.write('<pre><code class="')
+            io.write(elem.lang)
+            io.write('">')
+            for line in elem.child_lines:
+                io.write(line.render())
+                io.write('\n')
+            io.write('</code></pre>')
         return io.getvalue()
 
     def render_img(self, elem):

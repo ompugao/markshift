@@ -41,14 +41,6 @@ class TextElement(Element):
     def render(self,):
         return self.renderer.render_text(self)
 
-class RawElement(Element):
-    def __init__(self, parent, content, renderer):
-        self.content = content
-        super().__init__(parent, renderer)
-
-    def render(self,):
-        return self.renderer.render_raw(self)
-
 class StrongElement(Element):
     def __init__(self, parent, renderer):
         super().__init__(parent, renderer)
@@ -82,9 +74,11 @@ class QuoteElement(Element):
         return self.renderer.render_quote(self)
 
 class CodeElement(Element):
-    def __init__(self, parent, lang, renderer):
+    def __init__(self, parent, lang, content, inline, renderer):
         super().__init__(parent, renderer)
         self.lang = lang
+        self.content = content
+        self.inline = inline
 
     def render(self,):
         return self.renderer.render_code(self)

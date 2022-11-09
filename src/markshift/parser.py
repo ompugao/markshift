@@ -72,8 +72,10 @@ class Parser(object):
         if mcode is not None:
             self.state = State(ParseState.CODE, depth + 1)
             code_elem = CodeElement(parent=weakref.proxy(line_elem),
-                                      lang=mcode.group(1),
-                                      renderer=self.renderer)
+                                    lang=mcode.group(1),
+                                    content='',
+                                    inline=False,
+                                    renderer=self.renderer)
             line_elem.child_elements.append(code_elem)
             parent.child_lines.append(line_elem)
             return
