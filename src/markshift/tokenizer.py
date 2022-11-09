@@ -150,7 +150,7 @@ class ElementTransformer(Transformer):
         return path.value
 
     def ESCAPED_STRING(self, s):
-        return s[1:-2]
+        return s[1:-1]
 
     def expr_img_path_only(self, path):
         return ImageElement(parent=None, src=path, alt='', renderer=self.renderer)

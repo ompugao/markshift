@@ -4,8 +4,13 @@ Hello world:
 	of course, [/ italic] as well.
 		multiple indentation is available.
 	inline math:
-		you can write a math [$ O(n)$] [$ O^2(n)$] inline.
+		you can write a math [$ O(n)$] -- [$ O^2(n)$] inline.
 	[/* bold italic symbols]
+
+Links:
+	you can embed images: [@img https://via.placeholder.com/150].
+	you can set alt text: [@img https://via.placeholder.com/150 "this is an alt text"].
+		like this as well: [@img "this is also an alt text" https://via.placeholder.com/150].
 
 code embeddng (powered by highlight.js):
 	[@code python]
@@ -14,6 +19,16 @@ code embeddng (powered by highlight.js):
 			print(arg)
 		print_func('hoge')
 		print(np.zeros(4))
+	[@code cpp]
+		#include <iostream>
+		#include <vector>
+		#include <string>
+		
+		int main(int argc, char * argv[])
+		{
+		    std:cout << 1+2+3 << std::endl;
+		    return 0;
+		}
 
 
 math embedding (powered by katex):

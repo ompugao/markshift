@@ -51,7 +51,8 @@ class HtmlRenderer(Renderer):
         return io.getvalue()
 
     def render_text(self, elem):
-        return elem.content
+        #TODO?
+        return html.escape(elem.content)
 
     def render_strong(self, elem):
         io = StringIO()
