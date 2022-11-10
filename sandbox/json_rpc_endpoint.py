@@ -1,3 +1,4 @@
+# taken from https://github.com/yeger00/pylspclient/blob/master/pylspclient/json_rpc_endpoint.py
 from __future__ import print_function
 import json
 import re
