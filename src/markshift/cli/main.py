@@ -4,15 +4,29 @@ import sys, os
 sys.path.append(os.path.abspath(''))
 import click
 import re
+import contextlib
 
 import markshift.parser
 import markshift.htmlrenderer
 import markshift.markdownrenderer
 
+@contextlib.contextmanager
+def open_w(filename=None):
+    if filename:
+        fh = open(filename, 'w')
+    else:
+        fh = sys.stdout
+
+    try:
+        yield fh
+    finally:
+        if fh is not sys.stdout:
+            fh.close()
+
 @click.command()
 @click.argument('inputfile', type=click.Path(exists=True))
-@click.argument('outputfile', type=click.Path(exists=False))
-@click.argument('renderer', type=str, default='html')
+@click.option('--outputfile', type=click.Path(exists=False), default=None)
+@click.option('--renderer', type=str, default='html')
 def main(inputfile, outputfile, renderer):
     if renderer == 'html':
         renderer = markshift.htmlrenderer.HtmlRenderer()
@@ -66,7 +80,7 @@ def main(inputfile, outputfile, renderer):
     with open(click.format_filename(inputfile), 'r') as f:
         tree = parser.parse([l.rstrip('\n') for l in f.readlines()])
 
-    with open(outputfile, 'w') as f:
+    with open_w(outputfile) as f:
         f.write(template.replace('%%BODY%%', tree.render()))
 
 
