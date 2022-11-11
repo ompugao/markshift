@@ -50,9 +50,9 @@ def main():
     add_arguments(parser)
     args = parser.parse_args()
 
-    # msls_server.window = webview.create_window('markshift_previewer', hidden=False)
-    # webview.start(_start, args, gui='qt')
-    _start(args)
+    msls_server.window = webview.create_window('markshift_previewer', hidden=False)
+    webview.start(_start, args, gui='qt')
+    # _start(args)
 
 def _start(args):
     if args.tcp:

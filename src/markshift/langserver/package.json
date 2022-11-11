@@ -18,12 +18,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "countDownBlocking",
-        "title": "Count down 10 seconds [Blocking]"
+        "command": "hidePreviewer",
+        "title": "hide previewer"
       },
       {
-        "command": "countDownNonBlocking",
-        "title": "Count down 10 seconds [Non Blocking]"
+        "command": "showPreviewer",
+        "title": "show previewer"
       },
       {
         "command": "progress",
@@ -54,10 +54,10 @@
       "type": "object",
       "title": "Markshift Server Configuration",
       "properties": {
-        "MarkshiftLanguageServer.exampleConfiguration": {
+        "MarkshiftLanguageServer.openPreviewer": {
           "scope": "resource",
-          "type": "string",
-          "default": "You can override this message."
+          "type": "bool",
+          "default": false
         }
       }
     }

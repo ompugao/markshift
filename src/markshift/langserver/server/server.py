@@ -19,12 +19,13 @@ sys.path.append(os.path.abspath(''))
 import re
 import threading
 import logging
+import pathlib
 from functools import partial
 try:
     import ujson as json
 except Exception:  # pylint: disable=broad-except
     import json
-import webview
+from io import StringIO
 
 import asyncio
 # import json
@@ -50,13 +51,13 @@ from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressReport)
 from pygls.server import LanguageServer
 
-COUNT_DOWN_START_IN_SECONDS = 10
-COUNT_DOWN_SLEEP_IN_SECONDS = 1
-
+# import webview
+import markshift.parser
+import markshift.htmlrenderer
 
 class MarkshiftLanguageServer(LanguageServer):
-    CMD_COUNT_DOWN_BLOCKING = 'countDownBlocking'
-    CMD_COUNT_DOWN_NON_BLOCKING = 'countDownNonBlocking'
+    CMD_SHOW_PREVIEWER = 'showPreviewer'
+    CMD_HIDE_PREVIEWER = 'hidePreviewer'
     CMD_PROGRESS = 'progress'
     CMD_REGISTER_COMPLETIONS = 'registerCompletions'
     CMD_SHOW_CONFIGURATION_ASYNC = 'showConfigurationAsync'
@@ -70,6 +71,10 @@ class MarkshiftLanguageServer(LanguageServer):
         super().__init__(*args)
 
         self.window = None
+
+        renderer = markshift.htmlrenderer.HtmlRenderer()
+        self.parser = markshift.parser.Parser(renderer, use_tokenizer=True)
+
 
     # def start_io(self, stdin=None, stdout=None):
     #     super().start_io()
@@ -86,6 +91,68 @@ class MarkshiftLanguageServer(LanguageServer):
     # def start_ws(self, host, port):
     #     super().start_ws()
     #     self._start_hook()
+
+    def load_stuff(self,):
+        if self.window is not None:
+            script_path = pathlib.Path( __file__ ).parent.absolute()
+
+            css = StringIO()
+            with open(script_path / '../../../../assets/katex/katex.css') as f:
+                css.write(f.read())
+            with open(script_path / '../../../../assets/highlightjs/styles/github.min.css') as f:
+                css.write(f.read())
+            with open(script_path / '../../../../assets/github-markdown.min.css') as f:
+                css.write(f.read())
+            css.write("""
+                .empty-line{
+                    list-style-type: none;
+                }
+                .image {
+                    vertical-align: top; 
+                }
+                """)
+            self.window.load_css(css.getvalue())
+
+            js = StringIO()
+            with open(script_path / "../../../../assets/highlightjs/highlight.min.js") as f:
+                js.write(f.read())
+            with open(script_path / "../../../../assets/katex/katex.min.js") as f:
+                js.write(f.read())
+            with open(script_path / "../../../../assets/katex/contrib/auto-render.min.js") as f:
+                js.write(f.read())
+            js.write("""
+            hljs.highlightAll();
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: false},
+                {left: '$', right: '$', display: false},
+                {left: '\\[\\[', right: '\\]\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+            """)
+            self.window.evaluate_js(js.getvalue())
+
+            
+
+
+    def show(self, ):
+        if self.window is not None:
+            self.window.show()
+
+    def hide(self, ):
+        if self.window is not None:
+            self.window.hide()
+
+    def render_lines(self, lines):
+        tree = self.parser.parse(lines)
+        if self.window is not None:
+            # self.window.load_html(template.replace('{{BODY}}', tree.render()))
+            self.window.load_html("<!DOCTYPE html>" + tree.render())
+            self.load_stuff()
 
     def shutdown(self,):
         super().shutdown()
@@ -130,6 +197,21 @@ def _validate_json(source):
 
     return diagnostics
 
+def _render_document(ls, params):
+    ls.show_message_log('Rendering text...')
+
+    text_doc = ls.workspace.get_document(params.text_document.uri)
+
+    lines = text_doc.source.splitlines(keepends=False)
+    diagnostics = []
+    try:
+        msls_server.render_lines(lines)
+    except Exception as e:
+        pass
+    # diagnostics = _validate_json(source) if source else []
+
+    ls.publish_diagnostics(text_doc.uri, diagnostics)
+
 
 @msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=[',']))
 def completions(params: Optional[CompletionParams] = None) -> CompletionList:
@@ -146,45 +228,38 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
     )
 
 
-@msls_server.command(MarkshiftLanguageServer.CMD_COUNT_DOWN_BLOCKING)
-def count_down_10_seconds_blocking(ls, *args):
-    """Starts counting down and showing message synchronously.
-    It will `block` the main thread, which can be tested by trying to show
-    completion items.
-    """
-    for i in range(COUNT_DOWN_START_IN_SECONDS):
-        ls.show_message(f'Counting down... {COUNT_DOWN_START_IN_SECONDS - i}')
-        time.sleep(COUNT_DOWN_SLEEP_IN_SECONDS)
+@msls_server.command(MarkshiftLanguageServer.CMD_SHOW_PREVIEWER)
+async def show_previewer(ls, *args):
+    ls.show_message(f'showing previewer...')
+    msls_server.show()
 
-
-@msls_server.command(MarkshiftLanguageServer.CMD_COUNT_DOWN_NON_BLOCKING)
-async def count_down_10_seconds_non_blocking(ls, *args):
-    """Starts counting down and showing message asynchronously.
-    It won't `block` the main thread, which can be tested by trying to show
-    completion items.
-    """
-    for i in range(COUNT_DOWN_START_IN_SECONDS):
-        ls.show_message(f'Counting down... {COUNT_DOWN_START_IN_SECONDS - i}')
-        await asyncio.sleep(COUNT_DOWN_SLEEP_IN_SECONDS)
+@msls_server.command(MarkshiftLanguageServer.CMD_HIDE_PREVIEWER)
+async def hide_previewer(ls, *args):
+    ls.show_message(f'hiding previewer...')
+    msls_server.hide()
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_CHANGE)
 def did_change(ls, params: DidChangeTextDocumentParams):
     """Text document did change notification."""
-    _validate(ls, params)
+    # _validate(ls, params)
+    _render_document(ls, params)
+
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_CLOSE)
 def did_close(server: MarkshiftLanguageServer, params: DidCloseTextDocumentParams):
     """Text document did close notification."""
     server.show_message('Text Document Did Close')
+    msls_server.render_lines([])
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_OPEN)
 async def did_open(ls, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
     ls.show_message('Text Document Did Open')
-    _validate(ls, params)
+    # _validate(ls, params)
+    _render_document(ls, params)
 
 
 @msls_server.feature(
