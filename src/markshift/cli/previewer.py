@@ -212,26 +212,30 @@ class PreviewServer(MethodDispatcher):
 
 
 @click.command()
-@click.option('--tcp', type=bool, default=False)
-def main(tcp):
-    fileHandler = logging.FileHandler("markshift_previewer.log")
-    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-    fileHandler.setFormatter(logFormatter)
+@click.option('--tcp', type=bool, default=False, is_flag=True)
+@click.option('--logfile', type=click.Path(exists=False), default=None)
+def main(tcp, logfile):
     rootlogger = logging.getLogger()
-    rootlogger.addHandler(fileHandler)
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    if logfile is not None:
+        fileHandler = logging.FileHandler(logfile)
+        fileHandler.setFormatter(logFormatter)
+        rootlogger.addHandler(fileHandler)
     rootlogger.setLevel(logging.INFO)
     # consoleHandler = logging.StreamHandler()
     # consoleHandler.setFormatter(logFormatter)
     # rootlogger.addHandler(consoleHandler)
 
     window = webview.create_window('markshift_previewer', hidden=True)
-    webview.start(start, window, gui='qt')
+    webview.start(start, [window, tcp], gui='qt')
 
-def start(window):
+def start(window, tcp):
     import time
     time.sleep(1)
-    # start_io_lang_server(window, check_parent_process=True)
-    start_tcp_lang_server("0.0.0.0", 7920, window, check_parent_process=True)
+    if tcp:
+        start_tcp_lang_server("0.0.0.0", 7920, window, check_parent_process=True)
+    else:
+        start_io_lang_server(window, check_parent_process=True)
 
 
 if __name__ == '__main__':
