@@ -13,7 +13,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:json"
+    "onLanguage:markshift"
   ],
   "contributes": {
     "commands": [
@@ -52,9 +52,9 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "Json Server Configuration",
+      "title": "Markshift Server Configuration",
       "properties": {
-        "jsonServer.exampleConfiguration": {
+        "MarkshiftLanguageServer.exampleConfiguration": {
           "scope": "resource",
           "type": "string",
           "default": "You can override this message."
