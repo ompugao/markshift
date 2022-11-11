@@ -240,7 +240,7 @@ async def hide_previewer(ls, *args):
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_CHANGE)
-def did_change(ls, params: DidChangeTextDocumentParams):
+async def did_change(ls, params: DidChangeTextDocumentParams):
     """Text document did change notification."""
     # _validate(ls, params)
     _render_document(ls, params)
