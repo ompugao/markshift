@@ -73,7 +73,7 @@ class MarkshiftLanguageServer(LanguageServer):
         self.window = None
 
         renderer = markshift.htmlrenderer.HtmlRenderer()
-        self.parser = markshift.parser.Parser(renderer, use_tokenizer=True)
+        self.parser = markshift.parser.Parser(renderer)
 
 
     # def start_io(self, stdin=None, stdout=None):
