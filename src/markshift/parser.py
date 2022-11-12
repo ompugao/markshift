@@ -69,27 +69,15 @@ class Parser(object):
 
         if type(parsed_elem) is QuoteElement:
             self.state = State(ParseState.QUOTE, depth + 1)
-            line_elem.child_elements.append(parsed_elem)
-            parent.child_lines.append(line_elem)
-            return
-
         elif type(parsed_elem) is CodeElement:
             self.state = State(ParseState.CODE, depth + 1)
-            line_elem.child_elements.append(parsed_elem)
-            parent.child_lines.append(line_elem)
-            return
-
         elif type(parsed_elem) is MathElement:
             self.state = State(ParseState.MATH, depth + 1)
-            line_elem.child_elements.append(parsed_elem)
-            parent.child_lines.append(line_elem)
-            return
-
         else:
             self.state = State(ParseState.LINE, depth)
-            line_elem.child_elements.append(parsed_elem)
-            parent.child_lines.append(line_elem)
-            return
+        line_elem.child_elements.append(parsed_elem)
+        parent.child_lines.append(line_elem)
+        return
 
     def _find_parent_line(self, parent, depth):
         if depth == 0:
