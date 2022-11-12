@@ -87,8 +87,7 @@ class Parser(object):
 
         else:
             self.state = State(ParseState.LINE, depth)
-            line_elem.child_elements.append(
-                    self._parse_str(line_elem, line[depth:]))
+            line_elem.child_elements.append(parsed_elem)
             parent.child_lines.append(line_elem)
             return
 
