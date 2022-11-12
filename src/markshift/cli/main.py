@@ -76,7 +76,7 @@ def main(inputfile, outputfile, renderer):
     elif renderer == 'markdown':
         renderer = markshift.markdownrenderer.MarkdownRenderer()
         template = """%%BODY%%"""   
-    parser = markshift.parser.Parser(renderer, use_tokenizer=True)
+    parser = markshift.parser.Parser(renderer)
     with open(click.format_filename(inputfile), 'r') as f:
         tree = parser.parse([l.rstrip('\n') for l in f.readlines()])
 
