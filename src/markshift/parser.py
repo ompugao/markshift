@@ -6,6 +6,7 @@ from .exception import ParserError
 from enum import Enum
 import re
 import uuid
+import lark.exceptions
 
 class ParseState(Enum):
     LINE = 0
@@ -101,8 +102,9 @@ class Parser(object):
     def _parse_str(self, parent, s):
         if len(s) == 0:
             return TextElement(weakref.proxy(parent), content='', renderer=self.renderer)
-        tree = tokenizer.parse(s)
-        if tree is None:
-            return TextElement(weakref.proxy(parent), content='', renderer=self.renderer)
+        try:
+            tree = tokenizer.parse(s)
+        except lark.exceptions.UnexpectedEOF as e:
+            return TextElement(weakref.proxy(parent), content=s, renderer=self.renderer)
         return self.transformer.transform(tree)
 
