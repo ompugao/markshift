@@ -5,6 +5,7 @@ import lark
 import uuid
 import logging
 logger.setLevel(logging.DEBUG)
+from .exception import ParserError
 
 grammar = """
     ?start: expr_command
@@ -91,10 +92,10 @@ class ElementTransformer(Transformer):
             return QuoteElement(parent=None, renderer=self.renderer)
         elif command_name == 'code':
             if len(params) > 1:
-                raise ValueError('too many parameters for code')
+                raise ParserError('too many parameters for code')
             return CodeElement(parent=None, lang=params[0], content='', inline=False, renderer=self.renderer)
         elif command_name == 'math':
-            return MathElement(parent=None, content=params[0], renderer=self.renderer, inline=False)
+            return MathElement(parent=None, content=' '.join(params), renderer=self.renderer, uid=uuid.uuid4(), inline=False)
         return 
 
     def symbols(self, *tokens):
@@ -169,3 +170,4 @@ class ElementTransformer(Transformer):
 
     def expr_alt_img_path(self, alt, path):
         return ImageElement(parent=None, src=path, alt=alt, renderer=self.renderer)
+
