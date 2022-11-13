@@ -70,6 +70,22 @@ class DeletedElement(Element):
     def render(self,):
         return self.renderer.render_deleted(self)
 
+class HeadingElement(Element):
+    """
+    Heading (h1~h6) is not recommended to be used.
+    This is just for compatibility with markdown/html.
+    Instaed, just indent them, which will make texts portable.
+
+    Note: I know that the opinion above is not suitable for those who are visually impaired.
+    I hope browsers can help them to jump between the not-indented lines in a document easily.
+    """
+    def __init__(self, parent, level, content, renderer):
+        super().__init__(parent, renderer)
+        self.level = level
+        self.content = content
+
+    def render(self,):
+        return self.renderer.render_heading(self)
 
 class MathElement(Element):
     def __init__(self, parent, content, renderer, uid, inline=False):

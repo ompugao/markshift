@@ -1,11 +1,16 @@
+[@h1 title]
+[@h2 section]
+
 Hello world:
 	This format is indentation-based.
 	We can write [* bold] text.
 	of course, [/ italic] as well.
 		multiple indentation is available.
+	[/* bold italic symbols]
+	here is [- deleted text]
+	this is a text with [_ underline]
 	inline math:
 		you can write a math [$ O(n)$] -- [$ O^2(n)$] inline.
-	[/* bold italic symbols]
 	inline code: [`  hogehoge[]]   `]
 
 Links:

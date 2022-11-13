@@ -86,6 +86,14 @@ class HtmlRenderer(Renderer):
         io.write('</del>')
         return io.getvalue()
 
+    def render_heading(self, elem):
+        io = StringIO()
+        tag = 'h' + str(elem.level)
+        io.write(f'<{tag}>')
+        io.write(elem.content)
+        io.write(f'</{tag}>')
+        return io.getvalue()
+
     def render_math(self, elem):
         io = StringIO()
         if elem.inline == True:

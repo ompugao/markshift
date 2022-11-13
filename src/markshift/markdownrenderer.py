@@ -74,6 +74,13 @@ class MarkdownRenderer(Renderer):
         io.write('</del>')
         return io.getvalue()
 
+    def render_heading(self, elem):
+        io = StringIO()
+        io.write('#' * elem.level)
+        io.write(' ')
+        io.write(elem.content)
+        return io.getvalue()
+
     def render_math(self, elem):
         io = StringIO()
         if elem.inline == True:
