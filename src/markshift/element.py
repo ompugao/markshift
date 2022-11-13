@@ -56,6 +56,21 @@ class ItalicElement(Element):
     def render(self,):
         return self.renderer.render_italic(self)
 
+class UnderlineElement(Element):
+    def __init__(self, parent, renderer):
+        super().__init__(parent, renderer)
+
+    def render(self,):
+        return self.renderer.render_underline(self)
+
+class DeletedElement(Element):
+    def __init__(self, parent, renderer):
+        super().__init__(parent, renderer)
+
+    def render(self,):
+        return self.renderer.render_deleted(self)
+
+
 class MathElement(Element):
     def __init__(self, parent, content, renderer, uid, inline=False):
         super().__init__(parent, renderer)

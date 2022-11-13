@@ -70,6 +70,22 @@ class HtmlRenderer(Renderer):
         io.write('</i>')
         return io.getvalue()
 
+    def render_underline(self, elem):
+        io = StringIO()
+        io.write('<u>')
+        for el in elem.child_elements:
+            io.write(el.render())
+        io.write('</u>')
+        return io.getvalue()
+
+    def render_deleted(self, elem):
+        io = StringIO()
+        io.write('<del>')
+        for el in elem.child_elements:
+            io.write(el.render())
+        io.write('</del>')
+        return io.getvalue()
+
     def render_math(self, elem):
         io = StringIO()
         if elem.inline == True:

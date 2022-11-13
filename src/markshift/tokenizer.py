@@ -48,7 +48,7 @@ grammar = """
     // match other than "$]"
 
     COMMAND: "math" | "quote" | "code"
-    BUILTIN_NESTABLE_SYMBOLS: "*" | "/"
+    BUILTIN_NESTABLE_SYMBOLS: "*" | "/" | "_" | "-"
     LCASE_LETTER: "a".."z"
     UCASE_LETTER: "A".."Z"
     HIRAGANA_LETTER: /\p{Hiragana}/
@@ -110,6 +110,14 @@ class ElementTransformer(Transformer):
             elem = ItalicElement(parent=None, renderer=self.renderer)
             elem.child_elements.extend(child_elems)
             return elem
+        def _underline(child_elems):
+            elem = UnderlineElement(parent=None, renderer=self.renderer)
+            elem.child_elements.extend(child_elems)
+            return elem
+        def _deleted(child_elems):
+            elem = DeletedElement(parent=None, renderer=self.renderer)
+            elem.child_elements.extend(child_elems)
+            return elem
         assert(len(symbols) > 0)
         child = list(elements)
         for s in symbols:
@@ -117,6 +125,10 @@ class ElementTransformer(Transformer):
                 child = [_strong(child)]
             elif s == '/':
                 child = [_italic(child)]
+            elif s == '_':
+                child = [_underline(child)]
+            elif s == '-':
+                child = [_deleted(child)]
         return child[0]
 
     def expr_math(self, latex_math):
