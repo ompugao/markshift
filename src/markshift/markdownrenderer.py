@@ -124,6 +124,31 @@ class MarkdownRenderer(Renderer):
             io.write('```')
         return io.getvalue()
 
+    def render_table(self, elem):
+        io = StringIO()
+        offset = (' ' * (self.tabstep * self.indent + len('- ')))
+        for irow, row in enumerate(elem.rows):
+            if irow == 0:
+                io.write((' ' * (self.tabstep * self.indent)))
+            else:
+                io.write(offset)
+            
+            if irow == 1:
+                io.write('|')
+                for _ in range(len(row)):
+                    io.write(' ---- |')
+                io.write('\n')
+                io.write(offset)
+
+            io.write('|')
+            for i, e in enumerate(row):
+                io.write(' ')
+                io.write(e.render())
+                io.write(' |')
+            io.write('\n')
+        return io.getvalue()
+
+
     def render_img(self, elem):
         io = StringIO()
         io.write(f'![{elem.alt}]({elem.src})')

@@ -32,16 +32,13 @@ class HtmlRenderer(Renderer):
         for el in elem.child_elements:
             io.write(el.render())
         if len(elem.child_lines) > 0:
-            # io.write('<div class=tab>')
             io.write('<ul>')
             for line in elem.child_lines:
-                # io.write(line.render() + '<br/>')
                 l = line.render() 
                 if l == '':
                     io.write('<li class="empty-line">' + l + '<br/></li>')
                 else:
                     io.write('<li>' + l + '</li>')
-            # io.write('</div>')
             io.write('</ul>')
         return io.getvalue()
 
@@ -132,6 +129,20 @@ class HtmlRenderer(Renderer):
                 io.write(line.render())
                 io.write('\n')
             io.write('</code></pre>')
+        return io.getvalue()
+
+    def render_table(self, elem):
+        io = StringIO()
+        io.write('<table>\n')
+        for row in elem.rows:
+            io.write('<tr>')
+            for td in row:
+                io.write('<td>')
+                io.write(td.render())
+                io.write('</td>')
+            io.write('</tr>')
+            io.write('\n')
+        io.write('</table>\n')
         return io.getvalue()
 
     def render_img(self, elem):

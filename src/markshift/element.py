@@ -114,6 +114,14 @@ class CodeElement(Element):
     def render(self,):
         return self.renderer.render_code(self)
 
+class TableElement(Element):
+    def __init__(self, parent, renderer):
+        super().__init__(parent, renderer)
+        self.rows = []
+
+    def render(self,):
+        return self.renderer.render_table(self)
+
 class ImageElement(Element):
     def __init__(self, parent, src, alt, renderer):
         super().__init__(parent, renderer)

@@ -13,7 +13,7 @@ class ParseState(Enum):
     QUOTE = 1
     CODE = 2
     MATH = 3
-    # TABLE = 2
+    TABLE = 4
 
 class State(object):
     def __init__(self, parse_state = ParseState.LINE, indent = 0):
@@ -53,18 +53,22 @@ class Parser(object):
                 assert(type(quoteelem) == QuoteElement)
                 quoteelem.child_lines.append(self._parse_str(quoteelem, line[depth:]))
                 return
-            else:
+            elif self.state.parse_state in [ParseState.CODE, ParseState.MATH]:
                 blockelem = parent.child_elements[-1]
                 assert(type(blockelem) in [MathElement, CodeElement])
                 blockelem.child_lines.append(TextElement(parent=weakref.proxy(blockelem),
                                                          content=line[depth:],
                                                          renderer=self.renderer))
                 return
+            else:
+                blockelem = parent.child_elements[-1]
+                assert(type(blockelem) in [TableElement])
+                blockelem.rows.append([self._parse_str(blockelem, t) for t in line[depth:].split('\t')])
+                return
 
         line_elem = LineElement(parent=weakref.proxy(parent),
                                 renderer=self.renderer)
 
-        # print(depth, " ", line)
         parsed_elem = self._parse_str(parent, line[depth:])
 
         if type(parsed_elem) is QuoteElement:
@@ -73,6 +77,8 @@ class Parser(object):
             self.state = State(ParseState.CODE, depth + 1)
         elif type(parsed_elem) is MathElement:
             self.state = State(ParseState.MATH, depth + 1)
+        elif type(parsed_elem) is TableElement:
+            self.state = State(ParseState.TABLE, depth + 1)
         else:
             self.state = State(ParseState.LINE, depth)
         line_elem.child_elements.append(parsed_elem)

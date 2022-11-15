@@ -1,6 +1,11 @@
 [@h1 title]
 [@h2 section]
 
+[@table]
+	hoge	fuga	piyo
+	ぽん	ぴよ	ぴ
+	[google https://google.com]	[meta https://facebook.com]	[apple https://apple.com]
+
 Hello world:
 	This format is indentation-based.
 	We can write [* bold] text.

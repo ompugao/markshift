@@ -47,7 +47,7 @@ grammar = """
     ?latex_math_expr: /.+?(?=\$\])/ -> latex_math_expr
     // match other than "$]"
 
-    COMMAND: "math" | "quote" | "code" | /h[1-6]/
+    COMMAND: "math" | "quote" | "code" | /h[1-6]/ | "table"
     BUILTIN_NESTABLE_SYMBOLS: "*" | "/" | "_" | "-"
     LCASE_LETTER: "a".."z"
     UCASE_LETTER: "A".."Z"
@@ -99,6 +99,8 @@ class ElementTransformer(Transformer):
         elif command_name in ['h' + str(i) for i in range(1, 7)]:
             level = int(command_name[1])
             return HeadingElement(parent=None, level=level, content=' '.join(params), renderer=self.renderer)
+        elif command_name == 'table':
+            return TableElement(parent=None, renderer=self.renderer)
         raise ParserError('Invalid command: %s'%command_name)
 
     def symbols(self, *tokens):
