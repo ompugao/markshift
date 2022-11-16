@@ -11,17 +11,6 @@ function! s:setup_markshift() abort
 				\ 'cmd': ['python3', '-m', 'markshift.langserver.server'],
 				\ 'allowlist': ['markshift'],
 				\ })
-	call lsp#register_notifications('msls', 
-				\ function('s:notification_cb'))
-endfunction
-
-function! s:notification_cb(server, data) abort
-	let l:res = get(a:data, 'response', {})
-	if has_key(l:res, 'method') && l:res['method'] == 'window/showDocument'
-		execute ':e ' . lsp#utils#uri_to_path(l:res['params']['uri'])
-		call lsp#client#send_response(lsp#get_server_info('msls')['lsp_id'],
-			{'result': {'success': v:true}})
-	endif
 endfunction
 
 augroup vim_lsp_settings_markshift-language-server
