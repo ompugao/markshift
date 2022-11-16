@@ -121,14 +121,14 @@ class MarkshiftLanguageServer(LanguageServer):
 
     def load_stuff(self,):
         if self.window is not None:
-            script_path = pathlib.Path( __file__ ).parent.absolute()
+            
 
             css = StringIO()
-            with open(script_path / '../../../../assets/katex/katex.css') as f:
+            with open(retrieve_asset('katex/katex.css')) as f:
                 css.write(f.read())
-            with open(script_path / '../../../../assets/highlightjs/styles/github.min.css') as f:
+            with open(retrieve_asset('highlightjs/styles/github.min.css')) as f:
                 css.write(f.read())
-            with open(script_path / '../../../../assets/github-markdown.min.css') as f:
+            with open(retrieve_asset('github-markdown.min.css')) as f:
                 css.write(f.read())
             css.write("""
                 .empty-line{
@@ -141,11 +141,11 @@ class MarkshiftLanguageServer(LanguageServer):
             self.window.load_css(css.getvalue())
 
             js = StringIO()
-            with open(script_path / "../../../../assets/highlightjs/highlight.min.js") as f:
+            with open(retrieve_asset('highlightjs/highlight.min.js')) as f:
                 js.write(f.read())
-            with open(script_path / "../../../../assets/katex/katex.min.js") as f:
+            with open(retrieve_asset('katex/katex.min.js')) as f:
                 js.write(f.read())
-            with open(script_path / "../../../../assets/katex/contrib/auto-render.min.js") as f:
+            with open(retrieve_asset('katex/contrib/auto-render.min.js')) as f:
                 js.write(f.read())
             js.write("""
             function on_wikilink_click(pagename) {
@@ -205,6 +205,23 @@ class MarkshiftLanguageServer(LanguageServer):
 
 
 msls_server = MarkshiftLanguageServer('pygls-json-example', 'v0.1')
+
+def retrieve_asset(name, dir='assets'):
+    if getattr(sys, 'frozen', False):
+        # print('sys.frozen:', sys.frozen)
+        # print('sys.executable:', sys.executable)
+        # print('sys._MEIPASS:', sys._MEIPASS)
+
+        folder_of_executable = os.path.dirname(sys.executable)
+        if os.path.samefile(folder_of_executable, sys._MEIPASS):
+            base_path = os.path.dirname(folder_of_executable)
+        else:
+            base_path = folder_of_executable
+
+        assets_path = os.path.join(sys._MEIPASS, dir)
+    else:
+        assets_path = str(pathlib.Path( __file__ ).parent.parent.parent.parent.parent.absolute() / dir)
+    return os.path.join(assets_path, name)
 
 def _validate(ls, params):
     ls.show_message_log('Validating json...')
