@@ -18,6 +18,14 @@ class Renderer(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def render_link(self, elem):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def render_wikilink(self, elem):
+        raise NotImplementedError()
+
+    @abstractmethod
     def render_strong(self, elem):
         raise NotImplementedError()
 
@@ -31,6 +39,10 @@ class Renderer(metaclass=ABCMeta):
 
     @abstractmethod
     def render_code(self, elem):
+        raise NotImplementedError()
+    
+    @abstractmethod
+    def render_table(self, elem):
         raise NotImplementedError()
 
     @abstractmethod

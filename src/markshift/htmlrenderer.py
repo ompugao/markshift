@@ -12,18 +12,18 @@ class HtmlRenderer(Renderer):
         for el in elem.child_elements:
             io.write(el.render())
         if len(elem.child_lines) > 0:
-            # io.write('<div class=tab>')
-            io.write('<ul>')
-            for line in elem.child_lines:
-                # io.write(line.render() + '<br/>')
-                l = line.render() 
+            # io.write('<ul>')
+            # for line in elem.child_lines:
+            #     l = line.render() 
 
-                if l == '':
-                    io.write('<li class="empty-line">' + l + '<br/></li>')
-                else:
-                    io.write('<li>' + l + '</li>')
-            # io.write('</div>')
-            io.write('</ul>')
+            #     if l == '':
+            #         io.write('<li class="empty-line">' + l + '<br/></li>')
+            #     else:
+            #         io.write('<li>' + l + '</li>')
+            # io.write('</ul>')
+            for line in elem.child_lines:
+                io.write(line.render())
+                io.write('<br/>')
         tmp = io.getvalue()
         return tmp
 
@@ -45,6 +45,11 @@ class HtmlRenderer(Renderer):
     def render_link(self, elem):
         io = StringIO()
         io.write(f'<a href="{elem.link}">{elem.content}</a>')
+        return io.getvalue()
+
+    def render_wikilink(self, elem):
+        io = StringIO()
+        io.write(f'<a href="{elem.link}">{elem.link}</a>')
         return io.getvalue()
 
     def render_text(self, elem):
@@ -147,5 +152,8 @@ class HtmlRenderer(Renderer):
 
     def render_img(self, elem):
         io = StringIO()
-        io.write(f'<img class="image" src="{elem.src}" alt="{elem.alt}"/>')
+        io.write(f'<img class="image" src="{elem.src}" alt="{elem.alt} "')
+        for key, value in elem.options.items():
+            io.write(f'{key}={value}')
+        io.write('/>')
         return io.getvalue()

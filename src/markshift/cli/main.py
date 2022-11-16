@@ -8,6 +8,7 @@ import contextlib
 
 import markshift.parser
 import markshift.htmlrenderer
+import markshift.htmlrenderer4preview
 import markshift.markdownrenderer
 
 @contextlib.contextmanager
@@ -30,6 +31,7 @@ def open_w(filename=None):
 def main(inputfile, outputfile, renderer):
     if renderer == 'html':
         renderer = markshift.htmlrenderer.HtmlRenderer()
+        # renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
         template = """
         <!DOCTYPE html>
         <head>
@@ -79,6 +81,15 @@ def main(inputfile, outputfile, renderer):
     parser = markshift.parser.Parser(renderer)
     with open(click.format_filename(inputfile), 'r') as f:
         tree = parser.parse([l.rstrip('\n') for l in f.readlines()])
+
+    from ..element import WikiLinkElement
+    def _gather_wiki_links(tree, ret):
+        if type(tree) == WikiLinkElement:
+            ret.append(tree)
+        for e in tree.child_elements:
+            _gather_wiki_links(e, ret)
+        for e in tree.child_lines:
+            _gather_wiki_links(e, ret)
 
     with open_w(outputfile) as f:
         f.write(template.replace('%%BODY%%', tree.render()))

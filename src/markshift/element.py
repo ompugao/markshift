@@ -33,6 +33,14 @@ class LinkElement(Element):
     def render(self,):
         return self.renderer.render_link(self)
 
+class WikiLinkElement(LinkElement):
+    def __init__(self, parent, content, link, pos, renderer):
+        super().__init__(parent, content, link, renderer)
+        self.line, self.column, self.end_line, self.end_column = pos
+
+    def render(self,):
+        return self.renderer.render_wikilink(self)
+
 class TextElement(Element):
     def __init__(self, parent, content, renderer):
         self.content = content
@@ -123,10 +131,11 @@ class TableElement(Element):
         return self.renderer.render_table(self)
 
 class ImageElement(Element):
-    def __init__(self, parent, src, alt, renderer):
+    def __init__(self, parent, src, alt, options, renderer):
         super().__init__(parent, renderer)
         self.src = src
         self.alt = alt
+        self.options = options
 
     def render(self,):
         return self.renderer.render_img(self)

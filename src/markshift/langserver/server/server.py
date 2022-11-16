@@ -36,13 +36,16 @@ from typing import Optional
 
 from pygls.lsp.methods import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
                                TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN, 
-                               TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL)
+                               TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
+                               INITIALIZED)
 from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
                              CompletionParams, ConfigurationItem,
                              ConfigurationParams, Diagnostic,
                              DidChangeTextDocumentParams,
                              DidCloseTextDocumentParams,
-                             DidOpenTextDocumentParams, MessageType, Position,
+                             DidOpenTextDocumentParams,
+                             InitializedParams,
+                             MessageType, Position,
                              Range, Registration, RegistrationParams,
                              SemanticTokens, SemanticTokensLegend, SemanticTokensParams,
                              Unregistration, UnregistrationParams)
@@ -53,11 +56,18 @@ from pygls.server import LanguageServer
 
 # import webview
 import markshift.parser
-import markshift.htmlrenderer
+# import markshift.htmlrenderer
+import markshift.htmlrenderer4preview
+from markshift.element import WikiLinkElement
+import glob
+import pathlib
+
+log = logging.getLogger(__name__)
 
 class MarkshiftLanguageServer(LanguageServer):
     CMD_SHOW_PREVIEWER = 'showPreviewer'
     CMD_HIDE_PREVIEWER = 'hidePreviewer'
+    CMD_FORCE_REDRAW = 'forceRedraw'
     CMD_PROGRESS = 'progress'
     CMD_REGISTER_COMPLETIONS = 'registerCompletions'
     CMD_SHOW_CONFIGURATION_ASYNC = 'showConfigurationAsync'
@@ -72,7 +82,7 @@ class MarkshiftLanguageServer(LanguageServer):
 
         self.window = None
 
-        renderer = markshift.htmlrenderer.HtmlRenderer()
+        renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
         self.parser = markshift.parser.Parser(renderer)
 
 
@@ -121,6 +131,9 @@ class MarkshiftLanguageServer(LanguageServer):
             with open(script_path / "../../../../assets/katex/contrib/auto-render.min.js") as f:
                 js.write(f.read())
             js.write("""
+            function on_wikilink_click(pagename) {
+                pywebview.api.on_wikilink_click(pagename)
+            }
             hljs.highlightAll();
             renderMathInElement(document.body, {
             // customised options
@@ -153,6 +166,20 @@ class MarkshiftLanguageServer(LanguageServer):
             # self.window.load_html(template.replace('{{BODY}}', tree.render()))
             self.window.load_html("<!DOCTYPE html>" + tree.render())
             self.load_stuff()
+
+    def scan_wiki_links(self, lines):
+        tree = self.parser.parse(lines)
+        ret = []
+        self._gather_wiki_links(tree, ret)
+        return ret
+
+    def _gather_wiki_links(self, tree, ret):
+        if type(tree) == WikiLinkElement:
+            ret.append(tree)
+        for e in tree.child_elements:
+            self._gather_wiki_links(e, ret)
+        for e in tree.child_lines:
+            self._gather_wiki_links(e, ret)
 
     def shutdown(self,):
         super().shutdown()
@@ -197,10 +224,9 @@ def _validate_json(source):
 
     return diagnostics
 
-def _render_document(ls, params):
-    ls.show_message_log('Rendering text...')
-
-    text_doc = ls.workspace.get_document(params.text_document.uri)
+def _render_document(ls, uri):
+    # ls.show_message_log('Rendering text...')
+    text_doc = ls.workspace.get_document(uri)
 
     lines = text_doc.source.splitlines(keepends=False)
     diagnostics = []
@@ -210,7 +236,7 @@ def _render_document(ls, params):
         pass
     # diagnostics = _validate_json(source) if source else []
 
-    ls.publish_diagnostics(text_doc.uri, diagnostics)
+    ls.publish_diagnostics(uri, diagnostics)
 
 
 @msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=[',']))
@@ -238,12 +264,18 @@ async def hide_previewer(ls, *args):
     ls.show_message(f'hiding previewer...')
     msls_server.hide()
 
+@msls_server.command(MarkshiftLanguageServer.CMD_FORCE_REDRAW)
+async def force_redraw(ls, args):
+    log.debug('args: %s'%args)
+    uri = args[0]
+    _render_document(ls, uri)
+
 
 @msls_server.feature(TEXT_DOCUMENT_DID_CHANGE)
 async def did_change(ls, params: DidChangeTextDocumentParams):
     """Text document did change notification."""
     # _validate(ls, params)
-    _render_document(ls, params)
+    _render_document(ls, params.text_document.uri)
 
 
 
@@ -259,7 +291,32 @@ async def did_open(ls, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
     ls.show_message('Text Document Did Open')
     # _validate(ls, params)
-    _render_document(ls, params)
+    _render_document(ls, params.text_document.uri)
+
+@msls_server.feature(INITIALIZED)
+async def lsp_initialized(ls, params: InitializedParams):
+    """Lsp is initialized. The server will scan files"""
+    if not ls.workspace.is_local():
+        return
+    ls.show_message('Scanning started')
+    token = 'scanning_token'
+    await ls.progress.create_async(token)
+
+    ls.progress.begin(token, WorkDoneProgressBegin(title='Scanning', percentage=0))
+    files = glob.glob(str(pathlib.Path(ls.workspace.root_path) / '**/*.ms'), recursive=True)
+    for ifile, file in enumerate(files):
+        with open(file) as f:
+            lines = [line.rstrip('\n') for line in f.readlines()]
+        wikilinks = msls_server.scan_wiki_links(lines)
+        ls.show_message(f'{pathlib.Path(file).name}: {len(wikilinks)}')
+
+        percent = ifile*100.0/len(files)
+        ls.progress.report(
+            token,
+            WorkDoneProgressReport(message=f'{percent}%', percentage = int(percent)),
+        )
+        # await asyncio.sleep(2)
+    ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
 
 
 @msls_server.feature(

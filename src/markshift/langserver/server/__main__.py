@@ -23,6 +23,7 @@ from .server import msls_server
 
 logging.basicConfig(filename="msls.log", level=logging.DEBUG, filemode="w")
 
+log = logging.getLogger(__name__)
 
 def add_arguments(parser):
     parser.description = "markshift language server"
@@ -44,17 +45,43 @@ def add_arguments(parser):
         help="Bind to this port"
     )
 
+from pygls.lsp.types.window import ShowDocumentParams
+from pygls.lsp.types import (Position, Range)
+
+class Api(object):
+    def __init__(self,):
+        pass
+    def on_wikilink_click(self, pagename):
+        pagename = pagename.removesuffix('.ms') + ".ms"  # ensure suffix
+        params = ShowDocumentParams(
+                uri = msls_server.lsp.workspace.root_uri + '/' + pagename)
+        # range = Range(start = Position(line = 3, character = 0),
+        #               end = Position(line = 10, character = 0))
+        # params.selection = range
+        log.info(params.uri)
+        msls_server.show_document(params)
 
 def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
     args = parser.parse_args()
 
-    msls_server.window = webview.create_window('markshift_previewer', hidden=False)
+    api = Api()
+    msls_server.window = webview.create_window('markshift_previewer', js_api=api, hidden=True)
     webview.start(_start, args, gui='qt')
     # _start(args)
 
 def _start(args):
+    import time
+    time.sleep(1)
+
+    # do not steal focus
+    # from qtpy.QtCore import Qt
+    # view = msls_server.window.gui.BrowserView.instances['master']
+    # view.setWindowFlag(Qt.WindowDoesNotAcceptFocus)
+    # time.sleep(0.1)
+    msls_server.window.show()
+
     if args.tcp:
         msls_server.start_tcp(args.host, args.port)
     elif args.ws:
