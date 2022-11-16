@@ -39,6 +39,11 @@ class MarkdownRenderer(Renderer):
         io.write(f'[{elem.content}]({elem.link})')
         return io.getvalue()
 
+    def render_wikilink(self, elem):
+        io = StringIO()
+        io.write(f'[[elem.link]]')
+        return io.getvalue()
+
     def render_text(self, elem):
         return elem.content
 
@@ -56,6 +61,29 @@ class MarkdownRenderer(Renderer):
         for el in elem.child_elements:
             io.write(el.render())
         io.write('*')
+        return io.getvalue()
+
+    def render_underline(self, elem):
+        io = StringIO()
+        io.write('<u>')
+        for el in elem.child_elements:
+            io.write(el.render())
+        io.write('</u>')
+        return io.getvalue()
+
+    def render_deleted(self, elem):
+        io = StringIO()
+        io.write('<del>')
+        for el in elem.child_elements:
+            io.write(el.render())
+        io.write('</del>')
+        return io.getvalue()
+
+    def render_heading(self, elem):
+        io = StringIO()
+        io.write('#' * elem.level)
+        io.write(' ')
+        io.write(elem.content)
         return io.getvalue()
 
     def render_math(self, elem):
@@ -100,6 +128,31 @@ class MarkdownRenderer(Renderer):
             io.write(offset)
             io.write('```')
         return io.getvalue()
+
+    def render_table(self, elem):
+        io = StringIO()
+        offset = (' ' * (self.tabstep * self.indent + len('- ')))
+        for irow, row in enumerate(elem.rows):
+            if irow == 0:
+                io.write((' ' * (self.tabstep * self.indent)))
+            else:
+                io.write(offset)
+            
+            if irow == 1:
+                io.write('|')
+                for _ in range(len(row)):
+                    io.write(' ---- |')
+                io.write('\n')
+                io.write(offset)
+
+            io.write('|')
+            for i, e in enumerate(row):
+                io.write(' ')
+                io.write(e.render())
+                io.write(' |')
+            io.write('\n')
+        return io.getvalue()
+
 
     def render_img(self, elem):
         io = StringIO()

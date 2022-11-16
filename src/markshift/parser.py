@@ -1,17 +1,22 @@
-# -*- coding: utf-8 -*-
+ #  -*- coding: utf-8 -*-
 
 from .element import *
 from .tokenizer import tokenizer, ElementTransformer
+from .exception import ParserError
 from enum import Enum
 import re
 import uuid
+import lark.exceptions
+import logging
+
+log = logging.getLogger(__name__)
 
 class ParseState(Enum):
     LINE = 0
     QUOTE = 1
     CODE = 2
     MATH = 3
-    # TABLE = 2
+    TABLE = 4
 
 class State(object):
     def __init__(self, parse_state = ParseState.LINE, indent = 0):
@@ -19,22 +24,12 @@ class State(object):
         self.indent = indent
 
 class Parser(object):
-    def __init__(self, renderer, use_tokenizer=False):
+    def __init__(self, renderer):
         self.state = State(ParseState.LINE, 0)
 
         self.renderer = renderer
         self.regex_indent = re.compile('^(\t*)')
-        self.regex_strong = re.compile('\[\* (.*)\]')
-        self.regex_italic = re.compile('\[\/ (.*)\]')
-        self.regex_command = re.compile('\[@ (.*)\]')
-        self.regex_math = re.compile('\[\$ (.*?)\$\]')
 
-        self.regex_quote = re.compile('^\[@quote(.*)\]')
-        self.regex_code = re.compile('^\[@code (.*)\]')
-        self.regex_math_command = re.compile('^\[@math(.*)\]')
-        self.regex_raw = re.compile('``(.*)``')
-
-        self.use_tokenizer = use_tokenizer
         self.tokenizer = tokenizer
         self.transformer = ElementTransformer(renderer)
 
@@ -44,140 +39,86 @@ class Parser(object):
         return root_element
 
     def _parse(self, root, parent, lines):
-        for line in lines:
-            self._parse_line(root, line)
+        for i, line in enumerate(lines):
+            self._parse_line(root, line, i+1)  # line number starts from 1
         return root
 
-
-    def _parse_line(self, root, line):
+    def _parse_line(self, root, line, iline):
         depth = self.regex_indent.match(line).end()
         if self.state.parse_state != ParseState.LINE and depth > self.state.indent:
             depth = self.state.indent
         parent = self._find_parent_line(root, depth)
 
+        if self.state.parse_state != ParseState.LINE and self.state.indent == depth:
+            if self.state.parse_state == ParseState.QUOTE:
+                quoteelem = parent.child_elements[-1]
+                assert(type(quoteelem) == QuoteElement)
+                quoteelem.child_lines.append(self._parse_str(quoteelem, line[depth:], iline, depth))
+                return
+            elif self.state.parse_state in [ParseState.CODE, ParseState.MATH]:
+                blockelem = parent.child_elements[-1]
+                assert(type(blockelem) in [MathElement, CodeElement])
+                blockelem.child_lines.append(TextElement(parent=weakref.proxy(blockelem),
+                                                         content=line[depth:],
+                                                         renderer=self.renderer))
+                return
+            else:
+                blockelem = parent.child_elements[-1]
+                assert(type(blockelem) in [TableElement])
+                blockelem.rows.append([self._parse_str(blockelem, t, iline, depth) for t in line[depth:].split('\t')])
+                return
+
         line_elem = LineElement(parent=weakref.proxy(parent),
-                            renderer=self.renderer)
+                                renderer=self.renderer)
 
-        # print(depth, line)
-        mquote = self.regex_quote.match(line[depth:])
-        if mquote is not None:
+        parsed_elem = self._parse_str(parent, line[depth:], iline, depth)
+
+        if type(parsed_elem) is QuoteElement:
             self.state = State(ParseState.QUOTE, depth + 1)
-            quote_elem = QuoteElement(parent=weakref.proxy(line_elem),
-                                      renderer=self.renderer)
-            line_elem.child_elements.append(quote_elem)
-            parent.child_lines.append(line_elem)
-            return
-
-        mcode = self.regex_code.match(line[depth:])
-        if mcode is not None:
+        elif type(parsed_elem) is CodeElement:
             self.state = State(ParseState.CODE, depth + 1)
-            code_elem = CodeElement(parent=weakref.proxy(line_elem),
-                                    lang=mcode.group(1),
-                                    content='',
-                                    inline=False,
-                                    renderer=self.renderer)
-            line_elem.child_elements.append(code_elem)
-            parent.child_lines.append(line_elem)
-            return
-
-        mmath = self.regex_math_command.match(line[depth:])
-        if mmath is not None:
+        elif type(parsed_elem) is MathElement:
             self.state = State(ParseState.MATH, depth + 1)
-            math_elem = MathElement(parent=weakref.proxy(line_elem),
-                                    content=mmath.group(1),
-                                    renderer=self.renderer,
-                                    uid=uuid.uuid4(),
-                                    inline=False)
-            line_elem.child_elements.append(math_elem)
-            parent.child_lines.append(line_elem)
-            return
-
-        if self.state.parse_state == ParseState.QUOTE and self.state.indent == depth:
-            quoteelem = parent.child_elements[-1]
-            assert(type(quoteelem) == QuoteElement)
-            quoteelem.child_lines.extend(self._parse_str(quoteelem, line[depth:]))
-            return
-        elif self.state.parse_state == ParseState.CODE and self.state.indent == depth:
-            codeelem = parent.child_elements[-1]
-            assert(type(codeelem) == CodeElement)
-            codeelem.child_lines.append(TextElement(parent=weakref.proxy(codeelem),
-                                                content=line[depth:],
-                                                renderer=self.renderer))
-            return
-        elif self.state.parse_state == ParseState.MATH and self.state.indent == depth:
-            mathelem = parent.child_elements[-1]
-            assert(type(mathelem) == MathElement)
-            mathelem.child_lines.append(TextElement(parent=weakref.proxy(mathelem),
-                                                content=line[depth:],
-                                                renderer=self.renderer))
-            return
-        elif (self.state.parse_state != ParseState.LINE and self.state.indent != depth)\
-            or self.state.parse_state == ParseState.LINE:
+        elif type(parsed_elem) is TableElement:
+            self.state = State(ParseState.TABLE, depth + 1)
+        else:
             self.state = State(ParseState.LINE, depth)
-            line_elem.child_elements.extend(
-                    self._parse_str(line_elem, line[depth:]))
-            parent.child_lines.append(line_elem)
-            return
-
+        line_elem.child_elements.append(parsed_elem)
+        parent.child_lines.append(line_elem)
+        return
 
     def _find_parent_line(self, parent, depth):
         if depth == 0:
             return parent
         if len(parent.child_lines) == 0:
-            raise ValueError(f'Invalid indent')
+            raise ParserError(f'Invalid indent')
         return self._find_parent_line(parent.child_lines[-1], depth - 1)
 
-    def _parse_str_lark(self, parant, s):
-        return [self.transformer.transform(tokenizer.parse(s))]
-
-    def _parse_str(self, parent, s):
+    def _parse_str(self, parent, s, iline, offset):
         if len(s) == 0:
-            return []
-        if self.use_tokenizer:
-            return self._parse_str_lark(parent, s)
+            return TextElement(weakref.proxy(parent), content='', renderer=self.renderer)
+        try:
+            tree = tokenizer.parse(s)
+        except lark.exceptions.UnexpectedEOF as e:
+            log.error(e)
+            return TextElement(weakref.proxy(parent), content=s, renderer=self.renderer)
+        except Exception as e:
+            log.error(e)
+            return TextElement(weakref.proxy(parent), content=s, renderer=self.renderer)
+        elem = self.transformer.transform(tree)
+        self._fix_wikilink_line_pos(elem, iline, offset)
+        return elem
 
-        elms = []
-        # TODO
-        # self.regex_raw.match(s)
-        m = self.regex_strong.search(s)
-        if m is not None:
-            elms.extend(self._parse_str(parent, s[:m.start()]))
-
-            el = StrongElement(parent=weakref.proxy(parent),
-                               renderer=self.renderer)
-            el.child_elements.extend(self._parse_str(el, m.group(1)))
-            elms.append(el)
-
-            elms.extend(self._parse_str(parent, s[m.end():]))
-            return elms
-
-        m = self.regex_italic.search(s)
-        if m is not None:
-            elms.extend(self._parse_str(parent, s[:m.start()]))
-
-            el = ItalicElement(parent=weakref.proxy(parent),
-                               renderer=self.renderer)
-            el.child_elements.extend(self._parse_str(el, m.group(1)))
-            elms.append(el)
-
-            elms.extend(self._parse_str(parent, s[m.end():]))
-            return elms
+    def _fix_wikilink_line_pos(self, elem, iline, offset):
+        if type(elem) == WikiLinkElement:
+            elem.line = iline
+            elem.end_line = iline
+            elem.column += offset
+            elem.end_column += offset
+        for e in elem.child_elements:
+            self._fix_wikilink_line_pos(e, iline, offset)
+        for e in elem.child_lines:
+            self._fix_wikilink_line_pos(e, iline, offset)
 
 
-        m = self.regex_math.search(s)
-        if m is not None:
-            elms.extend(self._parse_str(parent, s[:m.start()]))
 
-            el = MathElement(parent=weakref.proxy(parent),
-                             content=m.group(1),
-                             renderer=self.renderer,
-                             uid=uuid.uuid4(),
-                             inline=True)
-            # el.child_elements.extend(self._parse_str(el, m.group(1)))
-            elms.append(el)
-            elms.extend(self._parse_str(parent, s[m.end():]))
-            return elms
-
-        return [TextElement(parent=weakref.proxy(parent),
-                        content=s,
-                        renderer=self.renderer)]
