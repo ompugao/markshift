@@ -57,6 +57,6 @@ vnoremap <silent> gf :call <SID>_open_ms_file(expand(@*))<CR>
 
 augroup Markshift
     au!
-    autocmd CursorMoved * call s:_preview_focused_buffer(bufnr('%'))
+    autocmd CursorMoved *.ms call s:_preview_focused_buffer(bufnr('%'))
 augroup END
 
