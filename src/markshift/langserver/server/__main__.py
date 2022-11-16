@@ -19,7 +19,7 @@ import argparse
 import logging
 import webview
 
-from .server import msls_server
+from .server import msls_server, Api
 
 logging.basicConfig(filename="msls.log", level=logging.DEBUG, filemode="w")
 
@@ -45,28 +45,12 @@ def add_arguments(parser):
         help="Bind to this port"
     )
 
-from pygls.lsp.types.window import ShowDocumentParams
-from pygls.lsp.types import (Position, Range)
-
-class Api(object):
-    def __init__(self,):
-        pass
-    def on_wikilink_click(self, pagename):
-        pagename = pagename.removesuffix('.ms') + ".ms"  # ensure suffix
-        params = ShowDocumentParams(
-                uri = msls_server.lsp.workspace.root_uri + '/' + pagename)
-        # range = Range(start = Position(line = 3, character = 0),
-        #               end = Position(line = 10, character = 0))
-        # params.selection = range
-        log.info(params.uri)
-        msls_server.show_document(params)
-
 def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
     args = parser.parse_args()
 
-    api = Api()
+    api = Api(msls_server)
     msls_server.window = webview.create_window('markshift_previewer', js_api=api, hidden=True)
     webview.start(_start, args, gui='qt')
     # _start(args)

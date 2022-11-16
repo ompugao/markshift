@@ -64,6 +64,23 @@ import pathlib
 
 log = logging.getLogger(__name__)
 
+from pygls.lsp.types.window import ShowDocumentParams
+from pygls.lsp.types import (Position, Range)
+
+class Api(object):
+    def __init__(self, server):
+        self.server = server
+
+    def on_wikilink_click(self, pagename):
+        pagename = pagename.removesuffix('.ms') + ".ms"  # ensure suffix
+        params = ShowDocumentParams(
+                uri = self.server.lsp.workspace.root_uri + '/' + pagename)
+        # range = Range(start = Position(line = 3, character = 0),
+        #               end = Position(line = 10, character = 0))
+        # params.selection = range
+        log.info(params.uri)
+        self.server.show_document(params)
+
 class MarkshiftLanguageServer(LanguageServer):
     CMD_SHOW_PREVIEWER = 'showPreviewer'
     CMD_HIDE_PREVIEWER = 'hidePreviewer'
