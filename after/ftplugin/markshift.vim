@@ -1,5 +1,8 @@
 
 function! s:_execute_command(command_name) abort
+	if lsp#get_server_status('msls') !=# 'running'
+		return
+	endif
 	let params = {}
 	let params['command_name'] = a:command_name
 	let params['server_name'] = 'msls'
@@ -14,8 +17,16 @@ function! s:hide_previewer() abort
 	call s:_execute_command('hidePreviewer')
 endfunction
 
+let s:ms_last_file = ''
 function! s:_preview_focused_buffer(buf) abort
+	if lsp#get_server_status('msls') !=# 'running'
+		return
+	endif
 	let l:path = lsp#utils#get_buffer_uri(a:buf)
+	if s:ms_last_file == l:path
+		return
+	endif
+	let s:ms_last_file = l:path
 	let params = {}
 	let params['bufnr'] = a:buf
 	let params['server_name'] = 'msls'

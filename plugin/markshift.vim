@@ -3,20 +3,9 @@ if exists('g:loaded_markshift')
 endif
 let g:loaded_markshift = 1
 
-function! s:setup_markshift() abort
-	if get(s:, 'setup') | return | endif
-	let s:setup = 1
-	let s:cliend_id = lsp#register_server({
-				\ 'name': 'msls',
-				\ 'cmd': ['msls'],
-				\ 'allowlist': ['markshift'],
-				\ })
-				"\ 'cmd': ['python3', '-m', 'markshift.langserver.server'],
-endfunction
-
-augroup vim_lsp_settings_markshift-language-server
+augroup markshift-filetype
   au!
   au BufNewFile,BufRead *.ms set filetype=markshift
-  au User lsp_setup call s:setup_markshift()
 augroup END
 
+command! MarkshiftCatAll :term bash -c "ls -1 *.ms | xargs -I{} sh -c \"echo {}; echo '----------------'; cat {}; echo '----------------'\""<CR>
