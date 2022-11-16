@@ -8,13 +8,15 @@ function! s:setup_markshift() abort
 	let s:setup = 1
 	let s:cliend_id = lsp#register_server({
 				\ 'name': 'msls',
-				\ 'cmd': ['python3', '-m', 'markshift.langserver.server'],
+				\ 'cmd': ['msls'],
 				\ 'allowlist': ['markshift'],
 				\ })
+				"\ 'cmd': ['python3', '-m', 'markshift.langserver.server'],
 endfunction
 
 augroup vim_lsp_settings_markshift-language-server
   au!
+  au BufNewFile,BufRead *.ms set filetype=markshift
   au User lsp_setup call s:setup_markshift()
 augroup END
 

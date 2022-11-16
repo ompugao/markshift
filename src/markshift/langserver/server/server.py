@@ -59,6 +59,7 @@ import markshift.parser
 # import markshift.htmlrenderer
 import markshift.htmlrenderer4preview
 from markshift.element import WikiLinkElement
+import urllib
 import glob
 import pathlib
 
@@ -177,12 +178,13 @@ class MarkshiftLanguageServer(LanguageServer):
         if self.window is not None:
             self.window.hide()
 
-    def render_lines(self, lines):
+    def render_lines(self, title, lines):
         tree = self.parser.parse(lines)
         if self.window is not None:
             # self.window.load_html(template.replace('{{BODY}}', tree.render()))
             self.window.load_html("<!DOCTYPE html>" + tree.render())
             self.load_stuff()
+            self.window.set_title(title)
 
     def scan_wiki_links(self, lines):
         tree = self.parser.parse(lines)
@@ -265,7 +267,7 @@ def _render_document(ls, uri):
     lines = text_doc.source.splitlines(keepends=False)
     diagnostics = []
     try:
-        msls_server.render_lines(lines)
+        msls_server.render_lines(urllib.parse.unquote(uri), lines)
     except Exception as e:
         pass
     # diagnostics = _validate_json(source) if source else []
@@ -317,7 +319,7 @@ async def did_change(ls, params: DidChangeTextDocumentParams):
 def did_close(server: MarkshiftLanguageServer, params: DidCloseTextDocumentParams):
     """Text document did close notification."""
     server.show_message('Text Document Did Close')
-    msls_server.render_lines([])
+    msls_server.render_lines('', [])
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_OPEN)
