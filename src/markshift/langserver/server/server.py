@@ -123,7 +123,7 @@ class MarkshiftLanguageServer(LanguageServer):
         css = StringIO()
         with open(retrieve_asset('katex/katex.css')) as f:
             css.write(f.read())
-        with open(retrieve_asset('highlightjs/styles/github.min.css')) as f:
+        with open(retrieve_asset('highlightjs/styles/github-dark.min.css')) as f:
             css.write(f.read())
         with open(retrieve_asset('dark-theme.css')) as f:
             css.write(f.read())
