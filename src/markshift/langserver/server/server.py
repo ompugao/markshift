@@ -343,7 +343,11 @@ async def lsp_initialized(ls, params: InitializedParams):
     for ifile, file in enumerate(files):
         with open(file) as f:
             lines = [line.rstrip('\n') for line in f.readlines()]
-        wikilinks = msls_server.scan_wiki_links(lines)
+        try:
+            wikilinks = msls_server.scan_wiki_links(lines)
+        except Exception as e:
+            continue
+
         ls.show_message(f'{pathlib.Path(file).name}: {len(wikilinks)}')
 
         percent = ifile*100.0/len(files)
@@ -351,7 +355,7 @@ async def lsp_initialized(ls, params: InitializedParams):
             token,
             WorkDoneProgressReport(message=f'{percent}%', percentage = int(percent)),
         )
-        # await asyncio.sleep(2)
+        await asyncio.sleep(0.01)
     ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
 
 
