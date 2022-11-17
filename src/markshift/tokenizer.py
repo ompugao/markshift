@@ -18,13 +18,13 @@ grammar = """
 
     ?statement: [expr|raw_sentence]*
 
-    ?expr: expr_title_url
-         | expr_url_title
-         | expr_url_only
+    ?expr: expr_img
          | expr_builtin_symbols
          | expr_code_inline
          | expr_math
-         | expr_img
+         | expr_title_url
+         | expr_url_title
+         | expr_url_only
          | expr_wiki_link
     // wiki link must be the last
 
@@ -105,7 +105,11 @@ class ElementTransformer(Transformer):
         elif command_name == 'code':
             if len(params) > 1:
                 raise ParserError('too many parameters for code')
-            return CodeElement(parent=None, lang=params[0], content='', inline=False, renderer=self.renderer)
+            if len(params) == 0:
+                lang = ''
+            else:
+                lang = params[0]
+            return CodeElement(parent=None, lang=lang, content='', inline=False, renderer=self.renderer)
         elif command_name == 'math':
             return MathElement(parent=None, content=' '.join(params), renderer=self.renderer, uid=uuid.uuid4(), inline=False)
         elif command_name in ['h' + str(i) for i in range(1, 7)]:
