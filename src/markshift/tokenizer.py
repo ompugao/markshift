@@ -18,9 +18,9 @@ grammar = """
 
     ?statement: [expr|raw_sentence]*
 
-    ?expr: expr_url_only
+    ?expr: expr_title_url
          | expr_url_title
-         | expr_title_url
+         | expr_url_only
          | expr_builtin_symbols
          | expr_code_inline
          | expr_math
@@ -28,11 +28,12 @@ grammar = """
          | expr_wiki_link
     // wiki link must be the last
 
-    ?expr_url_only: "[" url "]" -> expr_url_only
     ?expr_url_title: "[" url space_sep url_title "]"
     ?expr_title_url: "[" url_title space_sep url "]"
+    ?expr_url_only: "[" url "]" -> expr_url_only
     ?url: URL
-    ?url_title: NON_SQB_WORD -> url_title
+    ?url_title: WWORD -> url_title
+    // ?url_title: [WLETTER|" "]+ -> url_title
 
     ?expr_wiki_link: "[" wiki_link "]" -> expr_wiki_link
     ?wiki_link: WIKILINKCHARS
@@ -74,6 +75,8 @@ grammar = """
     NON_SQB_WORD: NONSQB+
     WIKILINKCHAR: /[^\[\]\/]/
     WIKILINKCHARS: WIKILINKCHAR+
+    // URLTITLECHAR: /[^\[:\]\/]/
+    // URLTITLECHARS: URLTITLECHAR+
     URL: /\w+:\/\/[\w\/:%#\$&\?\(\)~\.=\+\-]+/
     %import common.WS_INLINE
     %import common.ESCAPED_STRING
