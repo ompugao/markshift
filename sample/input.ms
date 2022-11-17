@@ -31,6 +31,9 @@ Links:
 	url: [google https://google.com]
 	url2: [https://google.com google]
 	url3: [https://google.co.jp/]
+	url4: [g o o g l e https://google.co.jp/]
+	url5: [https://google.co.jp/ g o o g l e]
+	url6: [https://google.co.jp/ https://google.co.jp/]
 
 code embeddng (powered by highlight.js):
 sample python code:
