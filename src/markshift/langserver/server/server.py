@@ -82,6 +82,23 @@ class Api(object):
         log.info(params.uri)
         self.server.show_document(params)
 
+def retrieve_asset(name, dir='assets'):
+    if getattr(sys, 'frozen', False):
+        # print('sys.frozen:', sys.frozen)
+        # print('sys.executable:', sys.executable)
+        # print('sys._MEIPASS:', sys._MEIPASS)
+
+        folder_of_executable = os.path.dirname(sys.executable)
+        if os.path.samefile(folder_of_executable, sys._MEIPASS):
+            base_path = os.path.dirname(folder_of_executable)
+        else:
+            base_path = folder_of_executable
+
+        assets_path = os.path.join(sys._MEIPASS, dir)
+    else:
+        assets_path = str(pathlib.Path( __file__ ).parent.parent.parent.parent.parent.absolute() / dir)
+    return os.path.join(assets_path, name)
+
 class MarkshiftLanguageServer(LanguageServer):
     CMD_SHOW_PREVIEWER = 'showPreviewer'
     CMD_HIDE_PREVIEWER = 'hidePreviewer'
@@ -103,6 +120,49 @@ class MarkshiftLanguageServer(LanguageServer):
         renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
         self.parser = markshift.parser.Parser(renderer)
 
+        css = StringIO()
+        with open(retrieve_asset('katex/katex.css')) as f:
+            css.write(f.read())
+        with open(retrieve_asset('highlightjs/styles/github.min.css')) as f:
+            css.write(f.read())
+        with open(retrieve_asset('dark-theme.css')) as f:
+            css.write(f.read())
+        css.write("""
+            .empty-line{
+                list-style-type: none;
+            }
+            .image {
+                vertical-align: top; 
+            }
+            """)
+        self.css = css.getvalue()
+
+        js = StringIO()
+        with open(retrieve_asset('highlightjs/highlight.min.js')) as f:
+            js.write(f.read())
+        with open(retrieve_asset('katex/katex.min.js')) as f:
+            js.write(f.read())
+        with open(retrieve_asset('katex/contrib/auto-render.min.js')) as f:
+            js.write(f.read())
+        js.write("""
+        function on_wikilink_click(pagename) {
+            pywebview.api.on_wikilink_click(pagename)
+        }
+        hljs.highlightAll();
+        renderMathInElement(document.body, {
+        // customised options
+        // • auto-render specific keys, e.g.:
+        delimiters: [
+            {left: '$$', right: '$$', display: false},
+            {left: '$', right: '$', display: false},
+            {left: '\\[\\[', right: '\\]\\]', display: true}
+        ],
+        // • rendering keys, e.g.:
+        throwOnError : false
+        });
+        """)
+        self.js = js.getvalue()
+
 
     # def start_io(self, stdin=None, stdout=None):
     #     super().start_io()
@@ -122,53 +182,8 @@ class MarkshiftLanguageServer(LanguageServer):
 
     def load_stuff(self,):
         if self.window is not None:
-            
-
-            css = StringIO()
-            with open(retrieve_asset('katex/katex.css')) as f:
-                css.write(f.read())
-            with open(retrieve_asset('highlightjs/styles/github.min.css')) as f:
-                css.write(f.read())
-            with open(retrieve_asset('github-markdown.min.css')) as f:
-                css.write(f.read())
-            css.write("""
-                .empty-line{
-                    list-style-type: none;
-                }
-                .image {
-                    vertical-align: top; 
-                }
-                """)
-            self.window.load_css(css.getvalue())
-
-            js = StringIO()
-            with open(retrieve_asset('highlightjs/highlight.min.js')) as f:
-                js.write(f.read())
-            with open(retrieve_asset('katex/katex.min.js')) as f:
-                js.write(f.read())
-            with open(retrieve_asset('katex/contrib/auto-render.min.js')) as f:
-                js.write(f.read())
-            js.write("""
-            function on_wikilink_click(pagename) {
-                pywebview.api.on_wikilink_click(pagename)
-            }
-            hljs.highlightAll();
-            renderMathInElement(document.body, {
-            // customised options
-            // • auto-render specific keys, e.g.:
-            delimiters: [
-                {left: '$$', right: '$$', display: false},
-                {left: '$', right: '$', display: false},
-                {left: '\\[\\[', right: '\\]\\]', display: true}
-            ],
-            // • rendering keys, e.g.:
-            throwOnError : false
-            });
-            """)
-            self.window.evaluate_js(js.getvalue())
-
-            
-
+            self.window.load_css(self.css)
+            self.window.evaluate_js(self.js)
 
     def show(self, ):
         if self.window is not None:
@@ -182,8 +197,18 @@ class MarkshiftLanguageServer(LanguageServer):
         tree = self.parser.parse(lines)
         if self.window is not None:
             # self.window.load_html(template.replace('{{BODY}}', tree.render()))
-            self.window.load_html("<!DOCTYPE html>" + tree.render())
-            self.load_stuff()
+            htmlio = StringIO()
+            htmlio.write("<!DOCTYPE html><html><head><style>")
+            htmlio.write(self.css)
+            htmlio.write("</style>")
+            htmlio.write('<script type="text/javascript">')
+            htmlio.write(self.js)
+            htmlio.write('</script></head>')
+            htmlio.write('<body>')
+            htmlio.write(tree.render())
+            htmlio.write('</body></html>')
+            self.window.load_html(htmlio.getvalue())
+            #self.load_stuff()
             self.window.set_title(title)
 
     def scan_wiki_links(self, lines):
@@ -207,23 +232,6 @@ class MarkshiftLanguageServer(LanguageServer):
 
 
 msls_server = MarkshiftLanguageServer('pygls-json-example', 'v0.1')
-
-def retrieve_asset(name, dir='assets'):
-    if getattr(sys, 'frozen', False):
-        # print('sys.frozen:', sys.frozen)
-        # print('sys.executable:', sys.executable)
-        # print('sys._MEIPASS:', sys._MEIPASS)
-
-        folder_of_executable = os.path.dirname(sys.executable)
-        if os.path.samefile(folder_of_executable, sys._MEIPASS):
-            base_path = os.path.dirname(folder_of_executable)
-        else:
-            base_path = folder_of_executable
-
-        assets_path = os.path.join(sys._MEIPASS, dir)
-    else:
-        assets_path = str(pathlib.Path( __file__ ).parent.parent.parent.parent.parent.absolute() / dir)
-    return os.path.join(assets_path, name)
 
 def _validate(ls, params):
     ls.show_message_log('Validating json...')
