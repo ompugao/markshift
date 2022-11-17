@@ -41,7 +41,7 @@ class MarkdownRenderer(Renderer):
 
     def render_wikilink(self, elem):
         io = StringIO()
-        io.write(f'[[elem.link]]')
+        io.write(f'[[{elem.link}]]')
         return io.getvalue()
 
     def render_text(self, elem):
