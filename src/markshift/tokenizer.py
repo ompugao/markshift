@@ -32,7 +32,7 @@ grammar = """
     ?expr_url_title: "[" url space_sep url_title "]"
     ?expr_title_url: "[" url_title space_sep url "]"
     ?url: URL
-    ?url_title: WWORD -> url_title
+    ?url_title: NON_SQB_WORD -> url_title
 
     ?expr_wiki_link: "[" wiki_link "]" -> expr_wiki_link
     ?wiki_link: WIKILINKCHARS
