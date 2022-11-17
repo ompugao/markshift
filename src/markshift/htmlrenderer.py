@@ -23,7 +23,8 @@ class HtmlRenderer(Renderer):
             # io.write('</ul>')
             for line in elem.child_lines:
                 io.write(line.render())
-                io.write('<br/>')
+                if len(line.child_lines) == 0:
+                    io.write('<br/>')
         tmp = io.getvalue()
         return tmp
 
