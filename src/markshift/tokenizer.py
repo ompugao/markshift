@@ -32,8 +32,9 @@ grammar = """
     ?expr_title_url: "[" url_title space_sep url "]"
     ?expr_url_only: "[" url "]" -> expr_url_only
     ?url: URL
-    ?url_title: WWORD -> url_title
+    // ?url_title: WWORD -> url_title
     // ?url_title: [WLETTER|" "]+ -> url_title
+    ?url_title: [NONSQB|" "]+ -> url_title
 
     ?expr_wiki_link: "[" wiki_link "]" -> expr_wiki_link
     ?wiki_link: WIKILINKCHARS
@@ -166,8 +167,9 @@ class ElementTransformer(Transformer):
     def URL(self, url):
         return url.value
 
-    def url_title(self, url_title):
-        return url_title.value
+    def url_title(self, *args):
+        print(args)
+        return ''.join([a.value for a in args])
 
     def expr_code_inline(self, code):
         return CodeElement(parent=None, lang=None, content=code, inline=True, renderer=self.renderer)
