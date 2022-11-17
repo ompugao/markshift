@@ -3,6 +3,11 @@ from .htmlrenderer import HtmlRenderer
 from io import StringIO
 import html
 import urllib.parse
+import logging
+import pathlib
+from pygls.uris import from_fs_path
+
+log = logging.getLogger(__name__)
 
 def get_youtube_id(value):
     """
@@ -36,10 +41,22 @@ class HtmlRenderer4Preview(HtmlRenderer):
         return io.getvalue()
 
     def render_link(self, elem):
+        log.debug(elem.link)
         videoid = get_youtube_id(elem.link)
         if videoid is not None:
             return f'<iframe class="videoContainer__video" width="640" height="480" src="http://www.youtube.com/embed/{videoid}?modestbranding=1&autoplay=0&controls=1&fs=0&loop=0&rel=0&showinfo=0&disablekb=1" frameborder="0"></iframe>'
              
         return super().render_link(elem)
 
-
+    def render_img(self, elem):
+        if '://' in elem.src:
+            return super().render_img(elem)
+            
+        # assume a local file
+        uripath = from_fs_path(str(pathlib.Path(elem.src).resolve()))
+        io = StringIO()
+        io.write(f'<img class="image" src="{uripath}" alt="{elem.alt} "')
+        for key, value in elem.options.items():
+            io.write(f'{key}={value}')
+        io.write('/>')
+        return io.getvalue()
