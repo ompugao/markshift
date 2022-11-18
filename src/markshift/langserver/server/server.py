@@ -134,6 +134,9 @@ class MarkshiftLanguageServer(LanguageServer):
             .image {
                 vertical-align: top; 
             }
+            ul {
+                margin: 4px;
+            }
             """)
         self.css = css.getvalue()
 
