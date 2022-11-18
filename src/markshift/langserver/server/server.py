@@ -54,7 +54,6 @@ from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressReport)
 from pygls.server import LanguageServer
 
-# import webview
 import markshift.parser
 # import markshift.htmlrenderer
 import markshift.htmlrenderer4preview
@@ -64,23 +63,6 @@ import glob
 import pathlib
 
 log = logging.getLogger(__name__)
-
-from pygls.lsp.types.window import ShowDocumentParams
-from pygls.lsp.types import (Position, Range)
-
-class Api(object):
-    def __init__(self, server):
-        self.server = server
-
-    def on_wikilink_click(self, pagename):
-        pagename = pagename.removesuffix('.ms') + ".ms"  # ensure suffix
-        params = ShowDocumentParams(
-                uri = self.server.lsp.workspace.root_uri + '/' + pagename)
-        # range = Range(start = Position(line = 3, character = 0),
-        #               end = Position(line = 10, character = 0))
-        # params.selection = range
-        log.info(params.uri)
-        self.server.show_document(params)
 
 def retrieve_asset(name, dir='assets'):
     if getattr(sys, 'frozen', False):
@@ -115,7 +97,7 @@ class MarkshiftLanguageServer(LanguageServer):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.window = None
+        self.previewer = None
 
         renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
         self.parser = markshift.parser.Parser(renderer)
@@ -132,7 +114,7 @@ class MarkshiftLanguageServer(LanguageServer):
                 list-style-type: none;
             }
             .image {
-                vertical-align: top; 
+                vertical-align: top;
             }
             ul {
                 margin: 4px;
@@ -168,53 +150,30 @@ class MarkshiftLanguageServer(LanguageServer):
         """)
         self.js = js.getvalue()
 
+    def set_previewer(self, previewer):
+        self.previewer = previewer
 
-    # def start_io(self, stdin=None, stdout=None):
-    #     super().start_io()
-    #     self._start_hook()
+    def show_previewer(self, ):
+        self.previewer.show()
 
-    # def start_pyodide(self):
-    #     super().start_pyodide()
-    #     self._start_hook()
-
-    # def start_tcp(self, host, port):
-    #     super().start_tcp()
-    #     self._start_hook()
-
-    # def start_ws(self, host, port):
-    #     super().start_ws()
-    #     self._start_hook()
-
-    def load_stuff(self,):
-        if self.window is not None:
-            self.window.load_css(self.css)
-            self.window.evaluate_js(self.js)
-
-    def show(self, ):
-        if self.window is not None:
-            self.window.show()
-
-    def hide(self, ):
-        if self.window is not None:
-            self.window.hide()
+    def hide_previewer(self, ):
+        self.previewer.hide()
 
     def render_lines(self, title, lines):
         tree = self.parser.parse(lines)
-        if self.window is not None:
-            # self.window.load_html(template.replace('{{BODY}}', tree.render()))
-            htmlio = StringIO()
-            htmlio.write("<!DOCTYPE html><html><head><style>")
-            htmlio.write(self.css)
-            htmlio.write("</style>")
-            htmlio.write('<script type="text/javascript">')
-            htmlio.write(self.js)
-            htmlio.write('</script></head>')
-            htmlio.write('<body>')
-            htmlio.write(tree.render())
-            htmlio.write('</body></html>')
-            self.window.load_html(htmlio.getvalue())
-            #self.load_stuff()
-            self.window.set_title(title)
+
+        htmlio = StringIO()
+        htmlio.write("<!DOCTYPE html><html><head><style>")
+        htmlio.write(self.css)
+        htmlio.write("</style>")
+        htmlio.write('<script type="text/javascript">')
+        htmlio.write(self.js)
+        htmlio.write('</script></head>')
+        htmlio.write('<body>')
+        htmlio.write(tree.render())
+        htmlio.write('</body></html>')
+        self.previewer.load_html(htmlio.getvalue())
+        self.previewer.set_title(title)
 
     def scan_wiki_links(self, lines):
         tree = self.parser.parse(lines)
@@ -232,8 +191,7 @@ class MarkshiftLanguageServer(LanguageServer):
 
     def shutdown(self,):
         super().shutdown()
-        if self.window is not None:
-            self.window.destroy()
+        self.previewer.destroy()
 
 
 msls_server = MarkshiftLanguageServer('pygls-json-example', 'v0.1')
@@ -282,7 +240,7 @@ def _render_document(ls, uri):
     try:
         msls_server.render_lines(urllib.parse.unquote(uri), lines)
     except Exception as e:
-        pass
+        log.error(e)
     # diagnostics = _validate_json(source) if source else []
 
     ls.publish_diagnostics(uri, diagnostics)
@@ -306,12 +264,12 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
 @msls_server.command(MarkshiftLanguageServer.CMD_SHOW_PREVIEWER)
 async def show_previewer(ls, *args):
     ls.show_message(f'showing previewer...')
-    msls_server.show()
+    msls_server.show_previewer()
 
 @msls_server.command(MarkshiftLanguageServer.CMD_HIDE_PREVIEWER)
 async def hide_previewer(ls, *args):
     ls.show_message(f'hiding previewer...')
-    msls_server.hide()
+    msls_server.hide_previewer()
 
 @msls_server.command(MarkshiftLanguageServer.CMD_FORCE_REDRAW)
 async def force_redraw(ls, args):
@@ -361,12 +319,12 @@ async def lsp_initialized(ls, params: InitializedParams):
         except Exception as e:
             continue
 
-        ls.show_message(f'{pathlib.Path(file).name}: {len(wikilinks)}')
+        ls.show_message(f'{pathlib.Path(file).name} has {len(wikilinks)} links')
 
         percent = ifile*100.0/len(files)
         ls.progress.report(
             token,
-            WorkDoneProgressReport(message=f'{percent}%', percentage = int(percent)),
+            WorkDoneProgressReport(message=f'{pathlib.Path(file).name}', percentage = int(percent)),
         )
         await asyncio.sleep(0.01)
     ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))

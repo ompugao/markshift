@@ -17,10 +17,10 @@
 ############################################################################
 import argparse
 import logging
-import webview
+import os
 
-from .server import msls_server, Api
-
+from .server import msls_server
+from .previewer import BasePreviewer, PywebviewPreviewer
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +48,10 @@ def add_arguments(parser):
         help="path to log file"
     )
     parser.add_argument(
+        "--no_previewer", action='store_true', default=False,
+        help='disable previewer'
+    )
+    parser.add_argument(
         "--always_on_top", action='store_true',
         help=""
     )
@@ -64,6 +68,7 @@ def add_arguments(parser):
         help="set zoom factor"
     )
 
+
 def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
@@ -71,28 +76,16 @@ def main():
 
     if len(args.logfile) > 0:
         logging.basicConfig(filename=args.logfile, level=logging.DEBUG, filemode="w")
-    api = Api(msls_server)
-    msls_server.window = webview.create_window('markshift_previewer', js_api=api, hidden=True, text_select=True, on_top=args.always_on_top)
-    webview.start(_start, args, gui='qt')
-    # _start(args)
+
+    if args.no_previewer:
+        previewer = BasePreviewer()
+    else:
+        previewer = PywebviewPreviewer(msls_server, always_on_top=args.always_on_top, never_steal_focus=args.never_steal_focus, hidden_on_boot=args.hidden_on_boot, zoom=args.zoom)
+
+    msls_server.set_previewer(previewer)
+    previewer.start(_start, args)
 
 def _start(args):
-    import time
-    time.sleep(1)
-    view = msls_server.window.gui.BrowserView.instances['master']
-
-    if args.never_steal_focus:
-        # do not steal focus
-
-        from qtpy.QtCore import Qt
-        view.setWindowFlag(Qt.WindowDoesNotAcceptFocus)
-        time.sleep(0.1)
-
-    view.view.setZoomFactor(args.zoom)
-
-    if not args.hidden_on_boot:
-        msls_server.window.show()
-
     if args.tcp:
         msls_server.start_tcp(args.host, args.port)
     elif args.ws:
