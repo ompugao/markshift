@@ -55,6 +55,11 @@ setlocal suffixesadd=.ms
 nnoremap <silent> gf :call <SID>_open_ms_file(expand('<cfile>'))<CR>
 vnoremap <silent> gf :call <SID>_open_ms_file(expand(@*))<CR>
 
+if get(g:, 'markshift_enable_default_mappings', 0)
+	nnoremap <buffer> <F8> <cmd>MarkshiftHidePreviewer<CR>
+	nnoremap <buffer> <F9> <cmd>MarkshiftShowPreviewer<CR>
+endif
+
 augroup Markshift
     au!
     autocmd CursorMoved *.ms call s:_preview_focused_buffer(bufnr('%'))
