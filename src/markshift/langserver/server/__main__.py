@@ -59,6 +59,10 @@ def add_arguments(parser):
         "--never_steal_focus", action='store_true',
         help="set a previewer not to steal focus"
     )
+    parser.add_argument(
+        "--zoom", type=float, default=1,
+        help="set zoom factor"
+    )
 
 def main():
     parser = argparse.ArgumentParser()
@@ -73,15 +77,18 @@ def main():
     # _start(args)
 
 def _start(args):
+    import time
+    time.sleep(1)
+    view = msls_server.window.gui.BrowserView.instances['master']
+
     if args.never_steal_focus:
         # do not steal focus
-        import time
-        time.sleep(1)
 
         from qtpy.QtCore import Qt
-        view = msls_server.window.gui.BrowserView.instances['master']
         view.setWindowFlag(Qt.WindowDoesNotAcceptFocus)
         time.sleep(0.1)
+
+    view.view.setZoomFactor(args.zoom)
 
     if not args.hidden_on_boot:
         msls_server.window.show()
