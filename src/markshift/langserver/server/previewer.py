@@ -98,8 +98,7 @@ class PywebviewPreviewer(BasePreviewer):
 
 
     def start(self, fn, args):
-        self.fn = fn
-        webview.start(self._start, (fn, args), gui='qt')
+        webview.start(self._start, (fn, args), gui='qt', debug=False)
 
     def _start(self, fn, args):
         time.sleep(1)
