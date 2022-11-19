@@ -58,6 +58,7 @@ from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressReport)
 from pygls.server import LanguageServer
 
+from markshift.exception import ParserError
 import markshift.parser
 # import markshift.htmlrenderer
 import markshift.htmlrenderer4preview
@@ -213,27 +214,18 @@ class MarkshiftLanguageServer(LanguageServer):
 
 msls_server = MarkshiftLanguageServer('pygls-json-example', 'v0.1')
 
-def _validate(ls, params):
-    ls.show_message_log('Validating json...')
+def _render_document(ls, uri):
+    # ls.show_message_log('Rendering text...')
+    text_doc = ls.workspace.get_document(uri)
 
-    text_doc = ls.workspace.get_document(params.text_document.uri)
-
-    source = text_doc.source
-    diagnostics = _validate_json(source) if source else []
-
-    ls.publish_diagnostics(text_doc.uri, diagnostics)
-
-
-def _validate_json(source):
-    """Validates json file."""
-    diagnostics = []
-
+    lines = text_doc.source.splitlines(keepends=False)
     try:
-        json.loads(source)
-    except JSONDecodeError as err:
-        msg = err.msg
-        col = err.colno
-        line = err.lineno
+        tree = msls_server.parse_lines(lines)
+        msls_server.render_content(urllib.parse.unquote(uri), tree.render())
+    except ParserError as e:
+        msg = str(e)
+        col = e.column
+        line = e.line
 
         d = Diagnostic(
             range=Range(
@@ -243,26 +235,12 @@ def _validate_json(source):
             message=msg,
             source=type(msls_server).__name__
         )
-
-        diagnostics.append(d)
-
-    return diagnostics
-
-def _render_document(ls, uri):
-    # ls.show_message_log('Rendering text...')
-    text_doc = ls.workspace.get_document(uri)
-
-    lines = text_doc.source.splitlines(keepends=False)
-    diagnostics = []
-    try:
-        tree = msls_server.parse_lines(lines)
-        msls_server.render_content(urllib.parse.unquote(uri), tree.render())
+        ls.publish_diagnostics(uri, [d])
+        return None
     except Exception as e:
         log.error(e)
         return None
-    # diagnostics = _validate_json(source) if source else []
 
-    ls.publish_diagnostics(uri, diagnostics)
     return tree
 
 
@@ -337,7 +315,6 @@ def did_close(server: MarkshiftLanguageServer, params: DidCloseTextDocumentParam
 async def did_open(ls, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
     ls.show_message('Text Document Did Open')
-    # _validate(ls, params)
     tree = _render_document(ls, params.text_document.uri)
     page = uri_to_link_name(params.text_document.uri)
     wikilinks = set([elm.link for elm in msls_server.gather_wiki_links(tree)])
@@ -352,9 +329,10 @@ def update_wikilinks(page, newlinks):
         msls_server.wikilink_graph.add_edge(page, wikilink)
     for wikilink in (oldlinks - newlinks):
         msls_server.wikilink_graph.remove_edge(page, wikilink)
+        # TODO remove node if 1. the node is not an existing file 2. the node does not have any in-edges
 
 def uri_to_link_name(uri):
-    return path_to_link_name(uri)
+    return path_to_link_name(urllib.parse.unquote(uri))
 
 def path_to_link_name(path):
     return pathlib.Path(path).name.removesuffix(file_ext)

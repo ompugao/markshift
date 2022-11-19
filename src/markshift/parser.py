@@ -48,6 +48,8 @@ class Parser(object):
         if self.state.parse_state != ParseState.LINE and depth > self.state.indent:
             depth = self.state.indent
         parent = self._find_parent_line(root, depth)
+        if parent is None:
+            raise ParserError(f'Invalid indent', iline, depth)
 
         if self.state.parse_state != ParseState.LINE and self.state.indent == depth:
             if self.state.parse_state == ParseState.QUOTE:
@@ -91,7 +93,7 @@ class Parser(object):
         if depth == 0:
             return parent
         if len(parent.child_lines) == 0:
-            raise ParserError(f'Invalid indent')
+            return None
         return self._find_parent_line(parent.child_lines[-1], depth - 1)
 
     def _parse_str(self, parent, s, iline, offset):
