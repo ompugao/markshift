@@ -6,7 +6,6 @@ import click
 import re
 import threading
 import logging
-import socketserver
 from functools import partial
 
 from pylsp_jsonrpc.dispatchers import MethodDispatcher
@@ -21,7 +20,7 @@ except Exception:  # pylint: disable=broad-except
 import webview
 
 import markshift.parser
-import markshift.htmlrenderer
+import markshift.htmlrenderer4preview
 
 log = logging.getLogger(__name__)
 
@@ -65,156 +64,16 @@ template = """
 </style>
 </head>
 <body>
-<div id="body-content"/>
+{{BODY}}
 </body>
 </html>
 """   
 
-# LINT_DEBOUNCE_S = 0.5  # 500 ms
-# PARENT_PROCESS_WATCH_INTERVAL = 10  # 10 s
-MAX_WORKERS = 64
-# PYTHON_FILE_EXTENSIONS = ('.py', '.pyi')
-# CONFIG_FILEs = ('pycodestyle.cfg', 'setup.cfg', 'tox.ini', '.flake8')
-
-
-class _StreamHandlerWrapper(socketserver.StreamRequestHandler):
-    """A wrapper class that is used to construct a custom handler class."""
-
-    delegate = None
-
-    def setup(self):
-        super().setup()
-        self.delegate = self.DELEGATE_CLASS(self.rfile, self.wfile)
-
-    def handle(self):
-        try:
-            self.delegate.start()
-        except OSError as e:
-            if os.name == 'nt':
-                # Catch and pass on ConnectionResetError when parent process
-                # dies
-                # pylint: disable=no-member, undefined-variable
-                if isinstance(e, WindowsError) and e.winerror == 10054:
-                    pass
-
-        self.SHUTDOWN_CALL()
-
-
-def start_tcp_lang_server(bind_addr, port, window, check_parent_process):
-    # if not issubclass(handler_class, PythonLSPServer):
-    #     raise ValueError('Handler class must be an instance of PythonLSPServer')
-    handler_class = PreviewServer
-
-    def shutdown_server(check_parent_process, *args):
-        # pylint: disable=unused-argument
-        if check_parent_process:
-            log.debug('Shutting down server')
-            # Shutdown call must be done on a thread, to prevent deadlocks
-            stop_thread = threading.Thread(target=server.shutdown)
-            stop_thread.start()
-        window.destroy()
-
-    # Construct a custom wrapper class around the user's handler_class
-    wrapper_class = type(
-        handler_class.__name__ + 'Handler',
-        (_StreamHandlerWrapper,),
-        {'DELEGATE_CLASS': partial(handler_class,
-                                   window=window,
-                                   check_parent_process=check_parent_process),
-         'SHUTDOWN_CALL': partial(shutdown_server, check_parent_process)}
-    )
-
-    server = socketserver.TCPServer((bind_addr, port), wrapper_class, bind_and_activate=False)
-    server.allow_reuse_address = True
-
-    try:
-        server.server_bind()
-        server.server_activate()
-        log.info('Serving %s on (%s, %s)', handler_class.__name__, bind_addr, port)
-        server.serve_forever()
-    finally:
-        log.info('Shutting down')
-        server.server_close()
-
-
-def start_io_lang_server(window, check_parent_process):
-    handler_class = PreviewServer
-    # if not issubclass(handler_class, PythonLSPServer):
-    #     raise ValueError('Handler class must be an instance of PythonLSPServer')
-
-    # binary stdin/out
-    stdin, stdout = sys.stdin.buffer, sys.stdout.buffer
-    rfile, wfile = stdin, stdout
-    log.info('Starting %s IO language server', handler_class.__name__)
-    server = handler_class(rfile, wfile, window, check_parent_process)
-    server.start()
-
-class PreviewServer(MethodDispatcher):
-    def __init__(self, rx, tx, window, *args, **kwargs):
-        self.window = window
-        renderer = markshift.htmlrenderer.HtmlRenderer()
-        self.parser = markshift.parser.Parser(renderer, use_tokenizer=True)
-
-        # Setup an endpoint that dispatches to the ls, and writes server->client messages
-        # back to the client websocket
-        if rx is not None:
-            self._jsonrpc_stream_reader = JsonRpcStreamReader(rx)
-        else:
-            self._jsonrpc_stream_reader = None
-
-        if tx is not None:
-            self._jsonrpc_stream_writer = JsonRpcStreamWriter(tx)
-        else:
-            self._jsonrpc_stream_writer = None
-
-        self._endpoint = Endpoint(self, self._jsonrpc_stream_writer.write, max_workers=MAX_WORKERS)
-
-    def start(self):
-        """Entry point for the server."""
-        self._jsonrpc_stream_reader.listen(self._endpoint.consume)
-
-    def consume(self, message):
-        """Entry point for consumer based server. Alternative to stream listeners."""
-        # assuming message will be JSON
-        self._endpoint.consume(message)
-
-    def m_initialize(self, **kwargs):
-        log.info("Got initialize params: %s", kwargs)
-        return {}
-
-    def m_show(self, **kwargs):
-        log.info("showing window")
-        self.window.show()
-        return {}
-
-    def m_hide(self, **kwargs):
-        log.info("hiding window")
-        self.window.hide()
-        return {}
-
-    def m_render_text(self, textDocument=None, **_kwargs):
-        log.info("Opened text document %s", textDocument['uri'])
-        tree = self.parser.parse(textDocument['content'].split('\n'))
-
-        self.window.load_html(tree.render())
-
-        # self.endpoint.notify('textDocument/publishDiagnostics', {
-        #     'uri': textDocument['uri'],
-        #     'diagnostics': [{
-        #         'range': {
-        #             'start': {'line': 0, 'character': 0},
-        #             'end': {'line': 1, 'character': 0},
-        #         },
-        #         'message': 'Some very bad Python code',
-        #         'severity': 1  # DiagnosticSeverity.Error
-        #     }]
-        # })
-
 
 @click.command()
-@click.option('--tcp', type=bool, default=False, is_flag=True)
+@click.option('--inputms', type=click.Path(exists=True), default=None)
 @click.option('--logfile', type=click.Path(exists=False), default=None)
-def main(tcp, logfile):
+def main(inputms, logfile):
     rootlogger = logging.getLogger()
     logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
     if logfile is not None:
@@ -226,17 +85,21 @@ def main(tcp, logfile):
     # consoleHandler.setFormatter(logFormatter)
     # rootlogger.addHandler(consoleHandler)
 
-    window = webview.create_window('markshift_previewer', hidden=True)
-    webview.start(start, [window, tcp], gui='qt')
+    window = webview.create_window('markshift_previewer', hidden=False)
+    webview.start(start, (window, inputms), gui='qt')
 
-def start(window, tcp):
-    import time
-    time.sleep(1)
-    if tcp:
-        start_tcp_lang_server("0.0.0.0", 7920, window, check_parent_process=True)
-    else:
-        start_io_lang_server(window, check_parent_process=True)
+def start(window, inputms):
+    try:
+        renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
+        parser = markshift.parser.Parser(renderer)
+        with open(inputms) as f:
+            tree = parser.parse([l.rstrip('\n') for l in f.readlines()])
+        window.load_html(template.replace('{{BODY}}', tree.render()))
 
+    except Exception as e:
+        log.error(e)
+        window.destroy()
+        raise e
 
 if __name__ == '__main__':
     main()
