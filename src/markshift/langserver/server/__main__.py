@@ -86,12 +86,17 @@ def main():
     previewer.start(_start, args)
 
 def _start(args):
-    if args.tcp:
-        msls_server.start_tcp(args.host, args.port)
-    elif args.ws:
-        msls_server.start_ws(args.host, args.port)
-    else:
-        msls_server.start_io()
+    try:
+        if args.tcp:
+            msls_server.start_tcp(args.host, args.port)
+        elif args.ws:
+            msls_server.start_ws(args.host, args.port)
+        else:
+            msls_server.start_io()
+    except Exception as e:
+        log.error(e)
+        msls_server.destroy()
+        raise e
 
 
 if __name__ == '__main__':

@@ -16,6 +16,7 @@
 ############################################################################
 import sys, os
 sys.path.append(os.path.abspath(''))
+import datetime
 import re
 import threading
 import logging
@@ -34,6 +35,8 @@ import time
 import uuid
 from typing import Optional
 
+import networkx as nx
+
 from pygls.lsp.methods import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
                                TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN, 
                                TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
@@ -48,7 +51,8 @@ from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
                              MessageType, Position,
                              Range, Registration, RegistrationParams,
                              SemanticTokens, SemanticTokensLegend, SemanticTokensParams,
-                             Unregistration, UnregistrationParams)
+                             Unregistration, UnregistrationParams,
+                             WorkspaceEdit)
 from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressEnd,
                                               WorkDoneProgressReport)
@@ -63,6 +67,9 @@ import glob
 import pathlib
 
 log = logging.getLogger(__name__)
+
+
+file_ext = '.ms'
 
 def retrieve_asset(name, dir='assets'):
     if getattr(sys, 'frozen', False):
@@ -85,6 +92,7 @@ class MarkshiftLanguageServer(LanguageServer):
     CMD_SHOW_PREVIEWER = 'showPreviewer'
     CMD_HIDE_PREVIEWER = 'hidePreviewer'
     CMD_FORCE_REDRAW = 'forceRedraw'
+    CMD_INSERT_IMAGE_FROM_CLIPBOARD = 'insertImageFromClipboard'
     CMD_PROGRESS = 'progress'
     CMD_REGISTER_COMPLETIONS = 'registerCompletions'
     CMD_SHOW_CONFIGURATION_ASYNC = 'showConfigurationAsync'
@@ -102,6 +110,12 @@ class MarkshiftLanguageServer(LanguageServer):
         renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
         self.parser = markshift.parser.Parser(renderer)
 
+        self._initialize_assets()
+
+        self.wikilink_graph = nx.DiGraph()
+        self.managed_docs_wikilinks = dict()
+
+    def _initialize_assets(self):
         css = StringIO()
         with open(retrieve_asset('katex/katex.css')) as f:
             css.write(f.read())
@@ -119,6 +133,8 @@ class MarkshiftLanguageServer(LanguageServer):
             ul {
                 margin: 4px;
             }
+            .katex-version {display: none;}
+            .katex-version::after {content:"0.10.2 or earlier";}
             """)
         self.css = css.getvalue()
 
@@ -159,9 +175,7 @@ class MarkshiftLanguageServer(LanguageServer):
     def hide_previewer(self, ):
         self.previewer.hide()
 
-    def render_lines(self, title, lines):
-        tree = self.parser.parse(lines)
-
+    def render_content(self, title, content):
         htmlio = StringIO()
         htmlio.write("<!DOCTYPE html><html><head><style>")
         htmlio.write(self.css)
@@ -170,13 +184,16 @@ class MarkshiftLanguageServer(LanguageServer):
         htmlio.write(self.js)
         htmlio.write('</script></head>')
         htmlio.write('<body>')
-        htmlio.write(tree.render())
+        htmlio.write(content)
         htmlio.write('</body></html>')
         self.previewer.load_html(htmlio.getvalue())
         self.previewer.set_title(title)
 
-    def scan_wiki_links(self, lines):
+    def parse_lines(self, lines):
         tree = self.parser.parse(lines)
+        return tree
+
+    def gather_wiki_links(self, tree):
         ret = []
         self._gather_wiki_links(tree, ret)
         return ret
@@ -238,26 +255,24 @@ def _render_document(ls, uri):
     lines = text_doc.source.splitlines(keepends=False)
     diagnostics = []
     try:
-        msls_server.render_lines(urllib.parse.unquote(uri), lines)
+        tree = msls_server.parse_lines(lines)
+        msls_server.render_content(urllib.parse.unquote(uri), tree.render())
     except Exception as e:
         log.error(e)
+        return None
     # diagnostics = _validate_json(source) if source else []
 
     ls.publish_diagnostics(uri, diagnostics)
+    return tree
 
 
-@msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=[',']))
+@msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=['[']))
 def completions(params: Optional[CompletionParams] = None) -> CompletionList:
     """Returns completion items."""
+    items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
     return CompletionList(
         is_incomplete=False,
-        items=[
-            CompletionItem(label='"'),
-            CompletionItem(label='['),
-            CompletionItem(label=']'),
-            CompletionItem(label='{'),
-            CompletionItem(label='}'),
-        ]
+        items = items,
     )
 
 
@@ -277,20 +292,45 @@ async def force_redraw(ls, args):
     uri = args[0]
     _render_document(ls, uri)
 
+# @msls_server.command(MarkshiftLanguageServer.CMD_INSERT_IMAGE_FROM_CLIPBOARD)
+# async def insert_image_from_clipboard(ls, *args):
+#     from qtpy.QtWidgets import QApplication
+#     app = QApplication.instance()
+#     if app is None:
+#         log.info("no qt instance")
+#         return
+#     clip = app.clipboard()
+#     if not clip.mimeData().hasImage():
+#         log.info("image is not in clipboard")
+#         return
+#     text = clip.text()
+#     if text == '':
+#         text = 'img_' + datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+#     fullfilename = str(pathlib.Path(msls_server.server.lsp.workspace.root_path) / 'assets' / (text + '.png'))
+#     clip.image().save(fullfilename)
+#     
+#     'assets' / (text + '.png')
+#     msls_server.apply_edit
+
+
 
 @msls_server.feature(TEXT_DOCUMENT_DID_CHANGE)
 async def did_change(ls, params: DidChangeTextDocumentParams):
     """Text document did change notification."""
-    # _validate(ls, params)
-    _render_document(ls, params.text_document.uri)
+    tree = _render_document(ls, params.text_document.uri)
+    if tree is None:
+        return
 
+    wikilinks = set([elm.link for elm in msls_server.gather_wiki_links(tree)])
+    page = uri_to_link_name(params.text_document.uri)
+    update_wikilinks(page, wikilinks)
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_CLOSE)
 def did_close(server: MarkshiftLanguageServer, params: DidCloseTextDocumentParams):
     """Text document did close notification."""
     server.show_message('Text Document Did Close')
-    msls_server.render_lines('', [])
+    msls_server.render_body('', '')
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_OPEN)
@@ -298,11 +338,30 @@ async def did_open(ls, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
     ls.show_message('Text Document Did Open')
     # _validate(ls, params)
-    _render_document(ls, params.text_document.uri)
+    tree = _render_document(ls, params.text_document.uri)
+    page = uri_to_link_name(params.text_document.uri)
+    wikilinks = set([elm.link for elm in msls_server.gather_wiki_links(tree)])
+    page = uri_to_link_name(params.text_document.uri)
+    update_wikilinks(page, wikilinks)
+
+
+def update_wikilinks(page, newlinks):
+    oldlinks = set([v for k, v in msls_server.wikilink_graph.out_edges(page)])
+    newlinks = set(newlinks)
+    for wikilink in (newlinks - oldlinks):
+        msls_server.wikilink_graph.add_edge(page, wikilink)
+    for wikilink in (oldlinks - newlinks):
+        msls_server.wikilink_graph.remove_edge(page, wikilink)
+
+def uri_to_link_name(uri):
+    return path_to_link_name(uri)
+
+def path_to_link_name(path):
+    return pathlib.Path(path).name.removesuffix(file_ext)
 
 @msls_server.feature(INITIALIZED)
 async def lsp_initialized(ls, params: InitializedParams):
-    """Lsp is initialized. The server will scan files"""
+    """Lsp is initialized. The server will start scanning files"""
     if not ls.workspace.is_local():
         return
     ls.show_message('Scanning started')
@@ -310,23 +369,28 @@ async def lsp_initialized(ls, params: InitializedParams):
     await ls.progress.create_async(token)
 
     ls.progress.begin(token, WorkDoneProgressBegin(title='Scanning', percentage=0))
-    files = glob.glob(str(pathlib.Path(ls.workspace.root_path) / '**/*.ms'), recursive=True)
+    files = glob.glob(str(pathlib.Path(ls.workspace.root_path) / ('**/*' + file_ext)), recursive=True)
     for ifile, file in enumerate(files):
         with open(file) as f:
             lines = [line.rstrip('\n') for line in f.readlines()]
+        # if True:
         try:
-            wikilinks = msls_server.scan_wiki_links(lines)
+            tree = msls_server.parse_lines(lines)
+            wikilinks = msls_server.gather_wiki_links(tree)
+            name = path_to_link_name(file)
+            msls_server.wikilink_graph.add_edges_from([(name, e.link) for e in wikilinks])
         except Exception as e:
+            log.error('Failed to extract wiklinks from %s'%file)
+            log.error(e)
             continue
 
-        ls.show_message(f'{pathlib.Path(file).name} has {len(wikilinks)} links')
-
+        # ls.show_message_log(f'{pathlib.Path(file).name} has {len(wikilinks)} links')
         percent = ifile*100.0/len(files)
         ls.progress.report(
             token,
             WorkDoneProgressReport(message=f'{pathlib.Path(file).name}', percentage = int(percent)),
         )
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.1)
     ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
 
 
