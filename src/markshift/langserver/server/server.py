@@ -247,7 +247,21 @@ def _render_document(ls, uri):
 @msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=['[']))
 def completions(params: Optional[CompletionParams] = None) -> CompletionList:
     """Returns completion items."""
-    items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
+    if params is not None:
+        doc = msls_server.lsp.workspace.get_document(params.text_document.uri)
+        l = doc.lines[params.position.line]
+        c = params.position.character
+        lindex = l[:c].rfind('[')
+        rindex = l[:c].rfind(']')
+        if lindex < 0 or lindex < rindex:
+            items = []
+        else:
+            # typedchrs = l[index+1:c]
+            # TODO fuzzy match
+            # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
+            items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
+    else:
+        items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
     return CompletionList(
         is_incomplete=False,
         items = items,
