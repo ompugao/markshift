@@ -137,6 +137,10 @@ class MarkshiftLanguageServer(LanguageServer):
             ul {
                 margin: 4px;
             }
+            .content-text {
+                font-size: 24px;
+                line-height: 1.5em;
+            }
             .katex-version {display: none;}
             .katex-version::after {content:"0.10.2 or earlier";}
             """)
