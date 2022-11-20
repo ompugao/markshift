@@ -3,12 +3,19 @@ This is an yet another markup language, <del>makeshift</del> markshift.
 
 Please see this video: (TODO)
 
+## Features
+- Simple markup syntax with '\t'
+    - heavily inspired by [Scrapbox](https://scrapbox.io)
+- Zettelkasten (dynamic wiki links) first, powered by Markshift Language Server.
+- Vim plugin included.
+
 ## Syntax
 ```txt
 Hello world.
 	create a list with a hard tab '\t'
 		which can be nested
 	the second element
+	the third element
 	[@quote]
 		quoted text must be indented with '\t'
 
@@ -21,20 +28,22 @@ Links:
 	[wikilink]
 	[https://google.com url title]
 	[url title https://google.com]
+	[@img https://via.placeholder.com/50 width=300 height=300]
 
 Code highlight with highlight.js
 	[@code python]
 		import numpy as np
 		print(np.sum(10))
+	[` inline code `]
 
 Math with katex
 	[@math]
-		import numpy as np
-		print(np.sum(10))
+		O(n^2)\\
+		sum_{i=0}^{10}{i} = 55
+	inline math: [$ O(n log(n)) $]
 ```
 
 ## Zettelkasten with Markshift Language Server (msls)
-
 - Setup Markshift Language Server (msls) with your client
 ```vim
 function! s:setup_markshift() abort
