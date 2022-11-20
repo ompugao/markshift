@@ -43,6 +43,7 @@ from pygls.lsp.methods import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
                                TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
                                INITIALIZED)
 from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
+                             CompletionItemKind,
                              CompletionParams, ConfigurationItem,
                              ConfigurationParams, Diagnostic,
                              DidChangeTextDocumentParams,
@@ -270,7 +271,7 @@ def _render_document(ls, uri):
     return tree
 
 
-@msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=['[']))
+@msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=['[', '@']))
 def completions(params: Optional[CompletionParams] = None) -> CompletionList:
     """Returns completion items."""
 
@@ -278,20 +279,30 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
         doc = msls_server.lsp.workspace.get_document(params.text_document.uri)
         l = doc.lines[params.position.line]
         c = params.position.character
+
+        if l[c-1] == '@':
+            return CompletionList(
+                is_incomplete=False,
+                items = [CompletionItem(label=command, kind=CompletionItemKind.Function,
+                                         filter_text=command, insert_text=command) for command in ['code', 'math', 'table', 'quote']],
+            )
+
         lindex = l[:c].rfind('[')
         rindex = l[:c].rfind(']')
         if lindex < 0 or lindex < rindex:
             items = []
-        else:
+        #else:
+        elif lindex == c-1:  # complete only when typed '['
             # typedchrs = l[index+1:c]
             # TODO fuzzy match?
             # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
-            items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
+            items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
             zoteroitems = zotero_comp(msls_server.zotero_path)
             if zoteroitems is not None:
-                items.extend([CompletionItem(label='#'+title, insert_text=inserttext) for title, inserttext in zoteroitems])
+                items.extend([CompletionItem(label='#'+title, kind=CompletionItemKind.Reference, insert_text=inserttext) for title, inserttext in zoteroitems])
+
     else:
-        items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
+        items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
     return CompletionList(
         is_incomplete=False,
         items = items,
