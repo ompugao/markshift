@@ -260,6 +260,8 @@ def _render_document(ls, uri):
         log.error(e)
         return None
 
+    # no error
+    ls.publish_diagnostics(uri, [])
     return tree
 
 
