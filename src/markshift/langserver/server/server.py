@@ -59,6 +59,7 @@ from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressEnd,
                                               WorkDoneProgressReport)
 from pygls.server import LanguageServer
+from pygls import uris
 
 from markshift.exception import ParserError
 import markshift.parser
@@ -178,7 +179,7 @@ class MarkshiftLanguageServer(LanguageServer):
     def hide_previewer(self, ):
         self.previewer.hide()
 
-    def render_content(self, title, content):
+    def render_content(self, title, content, backlinks=None):
         htmlio = StringIO()
         htmlio.write("<!DOCTYPE html><html><head><style>")
         htmlio.write(self.css)
@@ -188,6 +189,14 @@ class MarkshiftLanguageServer(LanguageServer):
         htmlio.write('</script></head>')
         htmlio.write('<body>')
         htmlio.write(content)
+        if backlinks:
+            htmlio.write('<hr id="hr-footer" style="width:95%; margin-top: 0.5em; margin-bottom: 0.5em; background-color: #959595;"/>')
+            icon_uri = uris.from_fs_path(retrieve_asset('img/cited_icon.png'))
+            htmlio.write(f'<img class="icon-cited" src="{icon_uri}" alt="This page is cited from the followings:" width=15 height=15 style="vertical-align: middle;"/>')
+            htmlio.write('<ul id="backlink-list" style="padding-inline-start: 20px">')
+            for backlink in backlinks:
+                htmlio.write(f'<li><a href=\'javascript:on_wikilink_click("{backlink}\");\'>{backlink}</a></li>')
+            htmlio.write('</ul>')
         htmlio.write('</body></html>')
         self.previewer.load_html(htmlio.getvalue())
         self.previewer.set_title(title)
@@ -223,7 +232,8 @@ def _render_document(ls, uri):
     lines = text_doc.source.splitlines(keepends=False)
     try:
         tree = msls_server.parse_lines(lines)
-        msls_server.render_content(urllib.parse.unquote(uri), tree.render())
+        backlinks = [linked for linked, _ in msls_server.wikilink_graph.in_edges(uri_to_link_name(uri))]
+        msls_server.render_content(urllib.parse.unquote(uri), tree.render(), backlinks)
     except ParserError as e:
         msg = str(e)
         col = e.column
