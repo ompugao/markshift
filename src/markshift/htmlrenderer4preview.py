@@ -7,6 +7,8 @@ import logging
 import pathlib
 from pygls.uris import from_fs_path
 
+import requests
+
 log = logging.getLogger(__name__)
 
 def get_youtube_id(value):
@@ -33,6 +35,23 @@ def get_youtube_id(value):
     # fail?
     return None
 
+def get_twitter_embed(tweet_url: str):
+    """
+    see https://medium.com/@avra42/how-to-embed-tweets-on-streamlit-web-application-247c01fdf767
+    """
+
+    query = urllib.parse.urlparse(tweet_url)
+    if query.netloc != 'twitter.com':
+        return None
+
+    api = "https://publish.twitter.com/oembed?url={}".format(tweet_url)
+    res = requests.get(api)
+    j = res.json()
+    if 'html' in j.keys():
+        return j['html']
+    else:
+        return None
+
 class HtmlRenderer4Preview(HtmlRenderer):
 
     def render_wikilink(self, elem):
@@ -45,6 +64,10 @@ class HtmlRenderer4Preview(HtmlRenderer):
         if videoid is not None:
             return f'<iframe class="videoContainer__video" width="640" height="480" src="http://www.youtube.com/embed/{videoid}?modestbranding=1&autoplay=0&controls=1&fs=0&loop=0&rel=0&showinfo=0&disablekb=1" frameborder="0"></iframe>'
              
+        tweetembedding = get_twitter_embed(elem.link)
+        if tweetembedding is not None:
+            return tweetembedding
+
         return super().render_link(elem)
 
     def render_img(self, elem):
@@ -59,3 +82,6 @@ class HtmlRenderer4Preview(HtmlRenderer):
             io.write(f'{key}={value}')
         io.write('/>')
         return io.getvalue()
+
+    def render_text(self, elem):
+        return f'<div class="content-text">{html.escape(elem.content)}</div>'
