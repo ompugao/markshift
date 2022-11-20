@@ -4,7 +4,7 @@ This is an yet another markup language, <del>makeshift</del> markshift.
 Please see this video: (TODO)
 
 ## Features
-- Simple markup syntax with '\t'
+- Simple markup syntax with `\t` and `[]`
     - heavily inspired by [Scrapbox](https://scrapbox.io)
 - Zettelkasten (dynamic wiki links) first, powered by Markshift Language Server.
 - Vim plugin included.
@@ -13,7 +13,7 @@ Please see this video: (TODO)
 ## Syntax
 ```txt
 Hello world.
-	create a list with a hard tab '\t'
+	create a list with a hard tab `\t'
 		which can be nested
 	the second element
 	the third element
