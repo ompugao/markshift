@@ -1,14 +1,15 @@
 
+let s:file_ext = '.ms'
 
 " We need a definition guard because we invoke 'edit' which will reload this
 " script while this function is running. We must not replace it.
 "if !exists('*s:_open_ms_file')
 function! s:_open_ms_file(filename) abort
-	let l:file = substitute(a:filename, '^\(.*\)\.ms$', '\1', '')
+	let l:file = substitute(a:filename, '^\(.*\)\' . s:file_ext . '$', '\1', '')
 	if l:file == ''
 		return
 	endif
-	execute ':e ' . l:file . '.ms'
+	execute ':e ' . l:file . s:file_ext
 endfunction
 "endif
 
@@ -62,6 +63,38 @@ function! markshift#preview_buffer(bnr) abort
 	call s:_preview_buffer(a:bnr)
 endfunction
 
+function! s:truncate(str, width) abort
+  " Original function is from mattn.
+  " http://github.com/mattn/googlereader-vim/tree/master
+
+  if a:str =~# '^[\x00-\x7f]*$'
+    return len(a:str) < a:width
+          \ ? printf('%-' . a:width . 's', a:str)
+          \ : strpart(a:str, 0, a:width)
+  endif
+
+  let ret = a:str
+  let width = strwidth(a:str)
+  if width > a:width
+    let ret = s:strwidthpart(ret, a:width)
+    let width = strwidth(ret)
+  endif
+
+  if width < a:width
+    let ret .= repeat(' ', a:width - width)
+  endif
+
+  return ret
+endfunction
+
+function! s:remove_suffix(str, suffix) abort
+  let idx = strridx(a:str, a:suffix)
+  if idx < 0
+    return a:str
+  endif
+  return s:truncate(a:str, idx)
+endfunction
+
 "if !exists('*s:_concat_view')
 function! s:_concat_view(argstr) abort
 	"let l:files = a:000
@@ -74,7 +107,7 @@ function! s:_concat_view(argstr) abort
 	execute ":1,$d"
 	" write all files
 	for l:file in l:files
-		call append(line('$'), '[' . l:file . ']  -----------------------------------')
+		call append(line('$'), '-------- [' . s:remove_suffix(l:file, s:file_ext) . ']  --------')
 		call cursor(line('$'), 0)
 		execute ':r ' . l:file
 		call append(line('$'), '')

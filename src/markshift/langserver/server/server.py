@@ -38,7 +38,8 @@ from typing import Optional
 import networkx as nx
 
 from pygls.lsp.methods import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
-                               TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN, 
+                               TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN,
+                               TEXT_DOCUMENT_DID_SAVE,
                                TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
                                INITIALIZED)
 from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
@@ -47,6 +48,7 @@ from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
                              DidChangeTextDocumentParams,
                              DidCloseTextDocumentParams,
                              DidOpenTextDocumentParams,
+                             DidSaveTextDocumentParams,
                              InitializedParams,
                              MessageType, Position,
                              Range, Registration, RegistrationParams,
@@ -257,7 +259,7 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
             items = []
         else:
             # typedchrs = l[index+1:c]
-            # TODO fuzzy match
+            # TODO fuzzy match?
             # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
             items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
     else:
@@ -335,6 +337,9 @@ async def did_open(ls, params: DidOpenTextDocumentParams):
     page = uri_to_link_name(params.text_document.uri)
     update_wikilinks(page, wikilinks)
 
+@msls_server.feature(TEXT_DOCUMENT_DID_SAVE)
+async def did_save(ls, params: DidSaveTextDocumentParams):
+    pass
 
 def update_wikilinks(page, newlinks):
     oldlinks = set([v for k, v in msls_server.wikilink_graph.out_edges(page)])
@@ -343,7 +348,14 @@ def update_wikilinks(page, newlinks):
         msls_server.wikilink_graph.add_edge(page, wikilink)
     for wikilink in (oldlinks - newlinks):
         msls_server.wikilink_graph.remove_edge(page, wikilink)
-        # TODO remove node if 1. the node is not an existing file 2. the node does not have any in-edges
+        # Remove node if
+        # 1. the node is not an existing file
+        # 2. the node does not have any in-edges
+        no_in_edges = (len(msls_server.wikilink_graph.in_edges(wikilink)) == 0)
+        if no_in_edges and not (pathlib.Path(msls_server.lsp.workspace.root_path) / (wikilink + file_ext)).exists():
+            log.info(f'Node "{wikilink}" disappears.')
+            msls_server.wikilink_graph.remove_node(wikilink)
+
 
 def uri_to_link_name(uri):
     return path_to_link_name(urllib.parse.unquote(uri))
