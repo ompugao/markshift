@@ -75,7 +75,7 @@ def main():
     args = parser.parse_args()
 
     if len(args.logfile) > 0:
-        logging.basicConfig(filename=args.logfile, level=logging.DEBUG, filemode="w")
+        logging.basicConfig(filename=args.logfile, level=logging.DEBUG, filemode="a")
 
     if args.no_previewer:
         previewer = BasePreviewer()
