@@ -8,6 +8,7 @@ Please see this video: (TODO)
     - heavily inspired by [Scrapbox](https://scrapbox.io)
 - Zettelkasten (dynamic wiki links) first, powered by Markshift Language Server.
 - Vim plugin included.
+- Zotero integration.
 
 ## Syntax
 ```txt
