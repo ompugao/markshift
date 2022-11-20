@@ -188,6 +188,7 @@ class MarkshiftLanguageServer(LanguageServer):
         htmlio.write(self.js)
         htmlio.write('</script></head>')
         htmlio.write('<body>')
+        # htmlio.write(f'<h1>{title}</h1>')
         htmlio.write(content)
         if backlinks:
             htmlio.write('<hr id="hr-footer" style="width:95%; margin-top: 0.5em; margin-bottom: 0.5em; background-color: #959595;"/>')
@@ -233,7 +234,9 @@ def _render_document(ls, uri):
     try:
         tree = msls_server.parse_lines(lines)
         backlinks = [linked for linked, _ in msls_server.wikilink_graph.in_edges(uri_to_link_name(uri))]
-        msls_server.render_content(urllib.parse.unquote(uri), tree.render(), backlinks)
+        path = uris.urlparse(uri)[2]
+        
+        msls_server.render_content(pathlib.Path(path).name, tree.render(), backlinks)
     except ParserError as e:
         msg = str(e)
         col = e.column
