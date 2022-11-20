@@ -8,6 +8,7 @@ import pathlib
 from pygls.uris import from_fs_path
 
 import requests
+import functools
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ def get_youtube_id(value):
     # fail?
     return None
 
+@functools.lru_cache
 def get_twitter_embed(tweet_url: str):
     """
     see https://medium.com/@avra42/how-to-embed-tweets-on-streamlit-web-application-247c01fdf767
@@ -56,7 +58,7 @@ class HtmlRenderer4Preview(HtmlRenderer):
 
     def render_wikilink(self, elem):
         io = StringIO()
-        io.write(f'<a href=\'javascript:on_wikilink_click("{elem.link}\");\'>{elem.link}</a>')
+        io.write(f'<a href=\'javascript:on_wikilink_click("{elem.link}\");\'><div class="content-text">{elem.link}</div></a>')
         return io.getvalue()
 
     def render_link(self, elem):
@@ -68,7 +70,9 @@ class HtmlRenderer4Preview(HtmlRenderer):
         if tweetembedding is not None:
             return tweetembedding
 
-        return super().render_link(elem)
+        io = StringIO()
+        io.write(f'<a href="{elem.link}"><div class="content-text">{elem.content}</div></a>')
+        return io.getvalue()
 
     def render_img(self, elem):
         if '://' in elem.src:
