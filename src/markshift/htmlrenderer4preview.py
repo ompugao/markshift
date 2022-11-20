@@ -58,7 +58,7 @@ class HtmlRenderer4Preview(HtmlRenderer):
 
     def render_wikilink(self, elem):
         io = StringIO()
-        io.write(f'<a href=\'javascript:on_wikilink_click("{elem.link}\");\'><div class="content-text">{elem.link}</div></a>')
+        io.write(f'<a href=\'javascript:on_wikilink_click("{elem.link}\");\'>{elem.link}</a>')
         return io.getvalue()
 
     def render_link(self, elem):
@@ -71,7 +71,7 @@ class HtmlRenderer4Preview(HtmlRenderer):
             return tweetembedding
 
         io = StringIO()
-        io.write(f'<a href="{elem.link}"><div class="content-text">{elem.content}</div></a>')
+        io.write(f'<a href="{elem.link}">{elem.content}</a>')
         return io.getvalue()
 
     def render_img(self, elem):
@@ -88,4 +88,4 @@ class HtmlRenderer4Preview(HtmlRenderer):
         return io.getvalue()
 
     def render_text(self, elem):
-        return f'<div class="content-text">{html.escape(elem.content)}</div>'
+        return f'{html.escape(elem.content)}'

@@ -200,7 +200,7 @@ class MarkshiftLanguageServer(LanguageServer):
             htmlio.write(f'<img class="icon-cited" src="{icon_uri}" alt="This page is cited from the followings:" width=15 height=15 style="vertical-align: middle;"/>')
             htmlio.write('<ul id="backlink-list" style="padding-inline-start: 20px">')
             for backlink in backlinks:
-                htmlio.write(f'<li><a href=\'javascript:on_wikilink_click("{backlink}\");\'><div class="content-text">{backlink}</div></a></li>')
+                htmlio.write(f'<li><a href=\'javascript:on_wikilink_click("{backlink}\");\'>{backlink}</a></li>')
             htmlio.write('</ul>')
         htmlio.write('</body></html>')
         self.previewer.load_html(htmlio.getvalue())
