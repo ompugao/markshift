@@ -67,6 +67,10 @@ def add_arguments(parser):
         "--zoom", type=float, default=1,
         help="set zoom factor"
     )
+    parser.add_argument(
+        "--zotero_path", type=str, default=None,
+        help="path to zotero directory"
+    )
 
 
 def main():
@@ -83,6 +87,8 @@ def main():
         previewer = PywebviewPreviewer(msls_server, always_on_top=args.always_on_top, never_steal_focus=args.never_steal_focus, hidden_on_boot=args.hidden_on_boot, zoom=args.zoom)
 
     msls_server.set_previewer(previewer)
+    if args.zotero_path is not None:
+        msls_server.set_zotero_path(args.zotero_path)
     previewer.start(_start, args)
 
 def _start(args):

@@ -65,6 +65,7 @@ from markshift.exception import ParserError
 import markshift.parser
 # import markshift.htmlrenderer
 import markshift.htmlrenderer4preview
+from .zotero import zotero_comp
 from markshift.element import WikiLinkElement
 import urllib
 import glob
@@ -115,6 +116,7 @@ class MarkshiftLanguageServer(LanguageServer):
         self.parser = markshift.parser.Parser(renderer)
 
         self._initialize_assets()
+
 
         self.wikilink_graph = nx.DiGraph()
         self.managed_docs_wikilinks = dict()
@@ -176,6 +178,9 @@ class MarkshiftLanguageServer(LanguageServer):
 
     def set_previewer(self, previewer):
         self.previewer = previewer
+
+    def set_zotero_path(self, zotero_path):
+        self.zotero_path = zotero_path
 
     def show_previewer(self, ):
         self.previewer.show()
@@ -268,6 +273,7 @@ def _render_document(ls, uri):
 @msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=['[']))
 def completions(params: Optional[CompletionParams] = None) -> CompletionList:
     """Returns completion items."""
+
     if params is not None:
         doc = msls_server.lsp.workspace.get_document(params.text_document.uri)
         l = doc.lines[params.position.line]
@@ -281,6 +287,9 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
             # TODO fuzzy match?
             # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
             items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
+            zoteroitems = zotero_comp(msls_server.zotero_path)
+            if zoteroitems is not None:
+                items.extend([CompletionItem(label=title, insert_text=inserttext) for title, inserttext in zoteroitems])
     else:
         items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes()]
     return CompletionList(
