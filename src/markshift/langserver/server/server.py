@@ -307,7 +307,7 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
             items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
             zoteroitems = zotero_comp(msls_server.lsp, msls_server.zotero_path)
             if zoteroitems is not None:
-                items.extend([CompletionItem(label='#'+title, kind=CompletionItemKind.Reference, insert_text=inserttext) for title, inserttext in zoteroitems])
+                items.extend([CompletionItem(label='Z: '+title, kind=CompletionItemKind.Reference, insert_text=inserttext) for title, inserttext in zoteroitems])
 
     else:
         items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
