@@ -89,3 +89,19 @@ class HtmlRenderer4Preview(HtmlRenderer):
 
     def render_text(self, elem):
         return f'{html.escape(elem.content)}'
+
+    def render_code(self, elem):
+        io = StringIO()
+        if elem.inline:
+            io.write('<code class="code-inline">')
+            io.write(html.escape(elem.content))
+            io.write('</code>')
+        else:
+            io.write('<pre><code class="')
+            io.write(elem.lang)
+            io.write('">')
+            for line in elem.child_lines:
+                io.write(line.render())
+                io.write('\n')
+            io.write('</code></pre>')
+        return io.getvalue()

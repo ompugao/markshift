@@ -144,6 +144,14 @@ class MarkshiftLanguageServer(LanguageServer):
                 font-size: 24px;
                 line-height: 1.5em;
             }
+            .code-inline {
+                background-color: rgba(208, 208, 208, 0.08);
+                padding: 0.06em;
+                border-radius: 0.2em;
+            }
+            pre {
+                tab-size: 4;
+            }
             .katex-version {display: none;}
             .katex-version::after {content:"0.10.2 or earlier";}
             """)
@@ -297,7 +305,7 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
             # TODO fuzzy match?
             # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
             items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
-            zoteroitems = zotero_comp(msls_server.zotero_path)
+            zoteroitems = zotero_comp(msls_server.lsp, msls_server.zotero_path)
             if zoteroitems is not None:
                 items.extend([CompletionItem(label='#'+title, kind=CompletionItemKind.Reference, insert_text=inserttext) for title, inserttext in zoteroitems])
 
