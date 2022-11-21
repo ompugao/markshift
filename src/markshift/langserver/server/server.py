@@ -152,6 +152,15 @@ class MarkshiftLanguageServer(LanguageServer):
             pre {
                 tab-size: 4;
             }
+            blockquote {
+                background: #4c4c4c5c;
+                padding: 0.5em 20px 0.5em 20px;
+                margin-block-start: 0.5em;
+                margin-block-end: 0.5em;
+                margin-inline-start: 30px;
+                margin-inline-end: 30px;
+                color: #bbb;
+            }
             .katex-version {display: none;}
             .katex-version::after {content:"0.10.2 or earlier";}
             """)
