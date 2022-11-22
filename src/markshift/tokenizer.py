@@ -19,6 +19,7 @@ grammar = """
     ?statement: [expr|raw_sentence]*
 
     ?expr: expr_img
+         | expr_attachment
          | expr_builtin_symbols
          | expr_code_inline
          | expr_math
@@ -32,8 +33,6 @@ grammar = """
     ?expr_title_url: "[" url_title space_sep url "]"
     ?expr_url_only: "[" url "]" -> expr_url_only
     ?url: URL
-    // ?url_title: WWORD -> url_title
-    // ?url_title: [WLETTER|" "]+ -> url_title
     ?url_title: [NONSQB|" "]+ -> url_title
 
     ?expr_wiki_link: "[" wiki_link "]" -> expr_wiki_link
@@ -46,9 +45,17 @@ grammar = """
     ?expr_img: "[@img" space_sep img_path (space_sep img_option)* "]" -> expr_img_path_only
              | "[@img" space_sep img_path space_sep alt_img (space_sep img_option)* "]" -> expr_img_path_alt
              | "[@img" space_sep alt_img space_sep img_path (space_sep img_option)* "]" -> expr_alt_img_path
-    ?img_path: URL | FILE_PATH
+    ?img_path: remote_file | local_file
+    ?remote_file: url -> remote_file
+    ?local_file: FILE_PATH -> local_file
     ?alt_img: ESCAPED_STRING
     ?img_option: /[\w\d]+/ "=" /[\w\d]+/ -> img_option
+
+    ?expr_attachment: "[@attachment" space_sep attachment_path "]" -> expr_attachment_path_only
+             | "[@attachment" space_sep attachment_path space_sep alt_attachment "]" -> expr_attachment_path_alt
+             | "[@attachment" space_sep alt_attachment space_sep attachment_path "]" -> expr_alt_attachment_path
+    ?attachment_path: remote_file | local_file
+    ?alt_attachment: ESCAPED_STRING
 
     ?raw_sentence: (NON_SQB_WORD|WS_INLINE)+ -> raw_sentence
     ?code_inline: /.+?(?=`\])/ -> code_inline
@@ -171,6 +178,12 @@ class ElementTransformer(Transformer):
     def URL(self, url):
         return url.value
 
+    def remote_file(self, url):
+        return Path(url, False)
+
+    def local_file(self, path):
+        return Path(path, True)
+
     def url_title(self, *args):
         return ''.join([a.value for a in args])
 
@@ -218,6 +231,18 @@ class ElementTransformer(Transformer):
     def expr_alt_img_path(self, alt, path, *options):
         options = self._validate_img_options(dict(options))
         return ImageElement(parent=None, src=path, alt=alt, options=options, renderer=self.renderer)
+
+    def expr_attachment_path_only(self, path, *options):
+        # options = self._validate_attachment_options(dict(options))
+        return LinkElement(parent=None, content=path.path, link=path.path, renderer=self.renderer)
+
+    def expr_attachment_path_alt(self, path, alt, *options):
+        # options = self._validate_attachment_options(dict(options))
+        return LinkElement(parent=None, content=alt, link=path.path, renderer=self.renderer)
+
+    def expr_alt_attachment_path(self, alt, path, *options):
+        # options = self._validate_attachment_options(dict(options))
+        return LinkElement(parent=None, content=alt, link=path.path, renderer=self.renderer)
 
     def img_option(self, key, value):
         return (key.value, value.value)

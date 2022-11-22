@@ -75,11 +75,11 @@ class HtmlRenderer4Preview(HtmlRenderer):
         return io.getvalue()
 
     def render_img(self, elem):
-        if '://' in elem.src:
+        if not elem.src.is_local:
             return super().render_img(elem)
             
-        # assume a local file
-        uripath = from_fs_path(str(pathlib.Path(elem.src).resolve()))
+        # resolve local path
+        uripath = from_fs_path(str(pathlib.Path(elem.src.path).resolve()))
         io = StringIO()
         io.write(f'<img class="image" src="{uripath}" alt="{elem.alt} "')
         for key, value in elem.options.items():
