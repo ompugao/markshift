@@ -112,6 +112,7 @@ class MarkshiftLanguageServer(LanguageServer):
         super().__init__(*args)
 
         self.previewer = None
+        self.zotero_path = None
 
         renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
         self.parser = markshift.parser.Parser(renderer)
