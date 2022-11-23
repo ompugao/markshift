@@ -236,8 +236,10 @@ class MarkshiftLanguageServer(LanguageServer):
         self.previewer.set_title(title)
 
     def parse_lines(self, lines, return_warnings=False):
-        tree, warnings = self.parser.parse(lines, return_warnings=return_warnings)
-        return tree, warnings
+        tree, warnings = self.parser.parse(lines, return_warnings=True)
+        if return_warnings:
+            return tree, warnings
+        return tree
 
     def gather_wiki_links(self, tree):
         ret = []
@@ -626,4 +628,5 @@ async def unregister_completions(ls: MarkshiftLanguageServer, *args):
     else:
         ls.show_message('Error happened during completions unregistration.',
                         MessageType.Error)
+
 
