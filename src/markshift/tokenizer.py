@@ -41,7 +41,7 @@ grammar = """
 
     ?expr_builtin_symbols: "[" symbols_applied space_sep statement "]"
     ?symbols_applied: BUILTIN_NESTABLE_SYMBOLS+ -> symbols
-    ?expr_code_inline: "[`" code_inline "`]" -> expr_code_inline
+    ?expr_code_inline: "[`" space_sep code_inline "`]" -> expr_code_inline
     ?expr_math: "[$" space_sep latex_math_expr "$]"
     ?expr_img: "[@img" space_sep img_path (space_sep img_option)* "]" -> expr_img_path_only
              | "[@img" space_sep img_path space_sep alt_img (space_sep img_option)* "]" -> expr_img_path_alt
