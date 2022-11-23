@@ -45,7 +45,7 @@ class HtmlRenderer(Renderer):
 
     def render_link(self, elem):
         io = StringIO()
-        io.write(f'<a href="{elem.link}">{elem.content}</a>')
+        io.write(f'<a href="{elem.link.path}">{elem.content}</a>')
         return io.getvalue()
 
     def render_wikilink(self, elem):

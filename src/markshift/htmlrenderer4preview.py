@@ -62,7 +62,12 @@ class HtmlRenderer4Preview(HtmlRenderer):
         return io.getvalue()
 
     def render_link(self, elem):
-        videoid = get_youtube_id(elem.link)
+        if elem.link.is_local:
+            link = from_fs_path(str(pathlib.Path(elem.link.path).resolve()))
+        else:
+            link = elem.link.path
+
+        videoid = get_youtube_id(link)
         if videoid is not None:
             return f'<iframe class="videoContainer__video" width="640" height="480" src="http://www.youtube.com/embed/{videoid}?modestbranding=1&autoplay=0&controls=1&fs=0&loop=0&rel=0&showinfo=0&disablekb=1" frameborder="0"></iframe>'
              
@@ -71,7 +76,7 @@ class HtmlRenderer4Preview(HtmlRenderer):
             return tweetembedding
 
         io = StringIO()
-        io.write(f'<a href="{elem.link}">{elem.content}</a>')
+        io.write(f'<a href="{link}">{elem.content}</a>')
         return io.getvalue()
 
     def render_img(self, elem):
