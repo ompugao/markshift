@@ -58,7 +58,8 @@ from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
                              WorkspaceEdit)
 from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressEnd,
-                                              WorkDoneProgressReport)
+                                              WorkDoneProgressReport,
+                                              DiagnosticSeverity)
 from pygls.server import LanguageServer
 from pygls import uris
 
@@ -234,9 +235,9 @@ class MarkshiftLanguageServer(LanguageServer):
         self.previewer.load_html(htmlio.getvalue())
         self.previewer.set_title(title)
 
-    def parse_lines(self, lines):
-        tree = self.parser.parse(lines)
-        return tree
+    def parse_lines(self, lines, return_warnings=False):
+        tree, warnings = self.parser.parse(lines, return_warnings=return_warnings)
+        return tree, warnings
 
     def gather_wiki_links(self, tree):
         ret = []
@@ -256,7 +257,7 @@ class MarkshiftLanguageServer(LanguageServer):
         self.previewer.destroy()
 
 
-msls_server = MarkshiftLanguageServer('pygls-json-example', 'v0.1')
+msls_server = MarkshiftLanguageServer('markshift-language-server', 'v0.1')
 
 def _render_document(ls, uri):
     # ls.show_message_log('Rendering text...')
@@ -264,11 +265,27 @@ def _render_document(ls, uri):
 
     lines = text_doc.source.splitlines(keepends=False)
     try:
-        tree = msls_server.parse_lines(lines)
+        tree, warnings = msls_server.parse_lines(lines, return_warnings=True)
         backlinks = [linked for linked, _ in msls_server.wikilink_graph.in_edges(uri_to_link_name(uri))]
         path = uris.urlparse(uri)[2]
         
         msls_server.render_content(pathlib.Path(path).name, tree.render(), backlinks)
+        diags = []
+        for w in warnings:
+            line = w.line
+            col = w.column
+            msg = str(w)
+            d = Diagnostic(
+                range=Range(
+                    start=Position(line=line - 1, character=col - 1),
+                    end=Position(line=line - 1, character=col)
+                ),
+                message=msg,
+                source=type(msls_server).__name__,
+                severity=DiagnosticSeverity.Warning
+            )
+            diags.append(d)
+        ls.publish_diagnostics(uri, diags)
     except ParserError as e:
         msg = str(e)
         col = e.column
@@ -283,13 +300,15 @@ def _render_document(ls, uri):
             source=type(msls_server).__name__
         )
         ls.publish_diagnostics(uri, [d])
+        msls_server.render_content(pathlib.Path(path).name, '', [])
         return None
     except Exception as e:
         log.error(e)
-        return None
+        ls.show_message(f'Unhandled Error: {str(e)}')
+        # set no error
+        ls.publish_diagnostics(uri, [])
+        raise e
 
-    # no error
-    ls.publish_diagnostics(uri, [])
     return tree
 
 

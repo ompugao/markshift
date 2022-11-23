@@ -121,7 +121,7 @@ class ElementTransformer(Transformer):
             return QuoteElement(parent=None, renderer=self.renderer)
         elif command_name == 'code':
             if len(params) > 1:
-                raise ParserError('too many parameters for code')
+                raise ParserError('too many parameters for code', command.line, command.column)
             if len(params) == 0:
                 lang = ''
             else:
@@ -134,7 +134,7 @@ class ElementTransformer(Transformer):
             return HeadingElement(parent=None, level=level, content=' '.join(params), renderer=self.renderer)
         elif command_name == 'table':
             return TableElement(parent=None, renderer=self.renderer)
-        raise ParserError('Invalid command: %s'%command_name)
+        raise ParserError('Invalid command: %s'%command_name, command.line, command.column)
 
     def symbols(self, *tokens):
         return [t.value for t in tokens]
@@ -235,10 +235,10 @@ class ElementTransformer(Transformer):
 
     def _validate_img_options(self, options):
         for key, value in options.items():
-            if not key in ["width", "height"]:
-                raise ParserError('Invalid image option: %s'%key)
-            if key == 'width' or key == 'height':
-                options[key] = int(value)
+            if not key.value in ["width", "height"]:
+                raise ParserError('Invalid image option: %s'%key, key.line, key.column)
+            if key.value == 'width' or key.value == 'height':
+                options[key.value] = int(value.value)
         return options
 
 
@@ -267,5 +267,5 @@ class ElementTransformer(Transformer):
     #     return LinkElement(parent=None, content=alt, link=path, renderer=self.renderer)
 
     def img_option(self, key, value):
-        return (key.value, value.value)
+        return (key, value)
 
