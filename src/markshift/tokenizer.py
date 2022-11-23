@@ -54,8 +54,7 @@ grammar = """
     ?expr_img: "[@img" space_sep img_path (space_sep img_option)* "]" -> expr_img_path_only
              | "[@img" space_sep img_path space_sep alt_img (space_sep img_option)* "]" -> expr_img_path_alt
              | "[@img" space_sep alt_img space_sep img_path (space_sep img_option)* "]" -> expr_alt_img_path
-    ?img_path: remote_file | local_file
-    ?remote_file: url -> remote_file
+    ?img_path: url | local_file
     ?local_file: FILE_PATH -> local_file
     ?alt_img: ESCAPED_STRING
     ?img_option: /[\w\d]+/ "=" /[\w\d]+/ -> img_option
@@ -63,7 +62,7 @@ grammar = """
     // ?expr_atag: "[@a" space_sep atag_path "]" -> expr_atag_path_only
     //          | "[@a" space_sep atag_path space_sep alt_atag "]" -> expr_atag_path_alt
     //          | "[@a" space_sep alt_atag space_sep atag_path "]" -> expr_alt_atag_path
-    // ?atag_path: remote_file | local_file
+    // ?atag_path: url | local_file
     // ?alt_atag: ESCAPED_STRING
 
     ?raw_sentence: (NON_SQB_WORD|WS_INLINE)+ -> raw_sentence
@@ -191,9 +190,6 @@ class ElementTransformer(Transformer):
 
     def URL(self, url):
         return url.value
-
-    def remote_file(self, url):
-        return Path(url, False)
 
     def local_file(self, path):
         return Path(path, True)
