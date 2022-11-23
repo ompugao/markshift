@@ -145,6 +145,9 @@ class MarkshiftLanguageServer(LanguageServer):
                 font-size: 24px;
                 line-height: 1.5em;
             }
+            .main-content {
+                margin: 20px;
+            }
             .code-inline {
                 background-color: rgba(208, 208, 208, 0.08);
                 padding: 0.06em;
@@ -216,6 +219,7 @@ class MarkshiftLanguageServer(LanguageServer):
         htmlio.write(self.js)
         htmlio.write('</script></head>')
         htmlio.write('<body>')
+        htmlio.write('<div class="main-content">')
         # htmlio.write(f'<h1>{title}</h1>')
         htmlio.write(content)
         if backlinks:
@@ -226,7 +230,7 @@ class MarkshiftLanguageServer(LanguageServer):
             for backlink in backlinks:
                 htmlio.write(f'<li><a href=\'javascript:on_wikilink_click("{backlink}\");\'>{backlink}</a></li>')
             htmlio.write('</ul>')
-        htmlio.write('</body></html>')
+        htmlio.write('</div></body></html>')
         self.previewer.load_html(htmlio.getvalue())
         self.previewer.set_title(title)
 
