@@ -265,13 +265,14 @@ def _render_document(ls, uri):
     # ls.show_message_log('Rendering text...')
     text_doc = ls.workspace.get_document(uri)
 
+    path = uris.urlparse(uri)[2]
+    name = pathlib.Path(path).name
     lines = text_doc.source.splitlines(keepends=False)
     try:
         tree, warnings = msls_server.parse_lines(lines, return_warnings=True)
         backlinks = [linked for linked, _ in msls_server.wikilink_graph.in_edges(uri_to_link_name(uri))]
-        path = uris.urlparse(uri)[2]
         
-        msls_server.render_content(pathlib.Path(path).name, tree.render(), backlinks)
+        msls_server.render_content(name, tree.render(), backlinks)
         diags = []
         for w in warnings:
             line = w.line
@@ -302,7 +303,7 @@ def _render_document(ls, uri):
             source=type(msls_server).__name__
         )
         ls.publish_diagnostics(uri, [d])
-        msls_server.render_content(pathlib.Path(path).name, '', [])
+        # msls_server.render_content(name, '', [])
         return None
     except Exception as e:
         log.error(e)
