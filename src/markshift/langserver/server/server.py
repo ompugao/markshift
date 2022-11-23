@@ -297,6 +297,7 @@ def _render_document(ls, uri):
 def completions(params: Optional[CompletionParams] = None) -> CompletionList:
     """Returns completion items."""
 
+    items = []
     if params is not None:
         doc = msls_server.lsp.workspace.get_document(params.text_document.uri)
         l = doc.lines[params.position.line]
@@ -319,9 +320,10 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
             # TODO fuzzy match?
             # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
             items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
-            zoteroitems = zotero_comp(msls_server.lsp, msls_server.zotero_path)
-            if zoteroitems is not None:
-                items.extend([CompletionItem(label='Z: '+title, kind=CompletionItemKind.Reference, insert_text=inserttext) for title, inserttext in zoteroitems])
+            if msls_server.zotero_path is not None:
+                zoteroitems = zotero_comp(msls_server.lsp, msls_server.zotero_path)
+                if zoteroitems is not None:
+                    items.extend([CompletionItem(label='Z: '+title, kind=CompletionItemKind.Reference, insert_text=inserttext) for title, inserttext in zoteroitems])
 
     else:
         items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
