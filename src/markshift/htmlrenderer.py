@@ -45,7 +45,7 @@ class HtmlRenderer(Renderer):
 
     def render_link(self, elem):
         io = StringIO()
-        io.write(f'<a href="{elem.link}">{elem.content}</a>')
+        io.write(f'<a href="{elem.link.path}">{elem.content}</a>')
         return io.getvalue()
 
     def render_wikilink(self, elem):
@@ -153,7 +153,7 @@ class HtmlRenderer(Renderer):
 
     def render_img(self, elem):
         io = StringIO()
-        io.write(f'<img class="image" src="{elem.src}" alt="{elem.alt} "')
+        io.write(f'<img class="image" src="{elem.src.path}" alt="{elem.alt} "')
         for key, value in elem.options.items():
             io.write(f'{key}={value}')
         io.write('/>')

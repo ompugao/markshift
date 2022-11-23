@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import weakref
 from io import StringIO
+from dataclasses import dataclass
 
 class Element(object):
     def __init__(self, parent = None, renderer = None):
@@ -24,10 +25,15 @@ class LineElement(Element):
     def render(self,):
         return self.renderer.render_line(self)
 
+@dataclass
+class Path(object):
+    path: str
+    is_local: bool
+
 class LinkElement(Element):
     def __init__(self, parent, content, link, renderer):
         super().__init__(parent, renderer)
-        self.content= content
+        self.content = content
         self.link = link
 
     def render(self,):

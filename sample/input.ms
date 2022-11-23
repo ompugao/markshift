@@ -21,13 +21,15 @@ Texts are organized with 'tab'.
 	[/* bold italic symbols]
 	invalid text will be shown as it is. [*
 	inline code: [`  hogehoge[]]   `]
-	[local link]
+	[wiki link]
+	[./assets/local_file.pdf link to local file]
 
 Links:
 	you can embed images: [@img https://via.placeholder.com/50 width=300].
 	you can set alt text: [@img https://via.placeholder.com/50 "this is an alt text"].
 		like this as well: [@img "this is also an alt text" https://via.placeholder.com/50].
 		[@img https://via.placeholder.com/50 width=300]
+		[@img ./path/to/local_file.png "image in a local system" width=300]
 	url: [google https://google.com]
 	url2: [https://google.com google]
 	url3: [https://google.co.jp/]

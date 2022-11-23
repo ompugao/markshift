@@ -36,7 +36,7 @@ class MarkdownRenderer(Renderer):
 
     def render_link(self, elem):
         io = StringIO()
-        io.write(f'[{elem.content}]({elem.link})')
+        io.write(f'[{elem.content}]({elem.link.path})')
         return io.getvalue()
 
     def render_wikilink(self, elem):
@@ -156,6 +156,6 @@ class MarkdownRenderer(Renderer):
 
     def render_img(self, elem):
         io = StringIO()
-        io.write(f'![{elem.alt}]({elem.src})')
+        io.write(f'![{elem.alt}]({elem.src.path})')
         return io.getvalue()
 
