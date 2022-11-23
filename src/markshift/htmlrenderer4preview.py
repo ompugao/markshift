@@ -71,7 +71,7 @@ class HtmlRenderer4Preview(HtmlRenderer):
         if videoid is not None:
             return f'<iframe class="videoContainer__video" width="640" height="480" src="http://www.youtube.com/embed/{videoid}?modestbranding=1&autoplay=0&controls=1&fs=0&loop=0&rel=0&showinfo=0&disablekb=1" frameborder="0"></iframe>'
              
-        tweetembedding = get_twitter_embed(elem.link)
+        tweetembedding = get_twitter_embed(link)
         if tweetembedding is not None:
             return tweetembedding
 
