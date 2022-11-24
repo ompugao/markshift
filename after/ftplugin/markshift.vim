@@ -32,6 +32,6 @@ endif
 
 augroup Markshift
     au!
-    autocmd CursorMoved *.ms call markshift#preview_buffer(bufnr('%'))
+    autocmd BufWinEnter *.ms call markshift#preview_buffer(bufnr('%'))
 augroup END
 
