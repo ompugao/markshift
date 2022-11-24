@@ -19,16 +19,11 @@ endfunction
 
 let s:bufname = 'markshift-concatview'
 
-let s:ms_last_file = ''
 function! s:_preview_buffer(buf) abort
 	if lsp#get_server_status('msls') !=# 'running'
 		return
 	endif
 	let l:path = lsp#utils#get_buffer_uri(a:buf)
-	if s:ms_last_file == l:path
-		return
-	endif
-	let s:ms_last_file = l:path
 	let params = {}
 	let params['bufnr'] = a:buf
 	let params['server_name'] = 'msls'
@@ -52,7 +47,7 @@ function! s:_openwindow()
 		execute "augroup MarkshiftConcatView"
 		execute "autocmd!"
 		execute "autocmd BufEnter " . s:bufname . " map <buffer> q <C-w>c<CR>"
-		execute "autocmd CursorMoved " . s:bufname " call s:_preview_buffer(bufnr('%'))"
+		execute "autocmd BufWinEnter " . s:bufname " call s:_preview_buffer(bufnr('%'))"
 		execute "augroup END"
 	endif
 	execute bufwinnr(s:bufname) . 'wincmd w'
