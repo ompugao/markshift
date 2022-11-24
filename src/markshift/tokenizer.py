@@ -86,7 +86,7 @@ grammar = """
 
     FILE_PATH: /([\w_\-\s0-9\.]+\/)+([\w_\-\s0-9\.]+)\.([^\s\]]*)/u
     // this must be a relative path which starts from './' or '../'
-    STRICT_FILE_PATH: /\.\.?\/([\w_\-\s0-9\.]+\/)+([\w_\-\s0-9\.]+)\.([^\s\]]+)/u 
+    STRICT_FILE_PATH: /\.\.?\/([\w_\-\s0-9\.]+\/)*([\w_\-\s0-9\.]+)\.([^\s\]]+)/u 
 
 
     NONSQB: /[^\[\]]/
