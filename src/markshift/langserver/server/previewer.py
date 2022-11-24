@@ -98,7 +98,7 @@ class PywebviewPreviewer(BasePreviewer):
 
 
     def start(self, fn, args):
-        webview.start(self._start, (fn, args), gui='qt', debug=True)
+        webview.start(self._start, (fn, args), gui='qt', debug=False)
 
 
     def _start(self, fn, args):
