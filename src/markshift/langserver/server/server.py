@@ -460,7 +460,7 @@ async def lsp_initialized(ls, params: InitializedParams):
     ls.progress.begin(token, WorkDoneProgressBegin(title='Scanning', percentage=0))
     files = glob.glob(str(pathlib.Path(ls.workspace.root_path) / ('**/*' + file_ext)), recursive=True)
     for ifile, file in enumerate(files):
-        with open(file) as f:
+        with open(file, encoding='utf-8') as f:
             lines = [line.rstrip('\n') for line in f.readlines()]
         # if True:
         try:
