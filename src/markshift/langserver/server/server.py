@@ -467,6 +467,7 @@ async def lsp_initialized(ls, params: InitializedParams):
             tree = msls_server.parse_lines(lines)
             wikilinks = msls_server.gather_wiki_links(tree)
             name = path_to_link_name(file)
+            msls_server.wikilink_graph.add_node(name)
             msls_server.wikilink_graph.add_edges_from([(name, e.link) for e in wikilinks])
         except Exception as e:
             log.error('Failed to extract wiklinks from %s'%file)
@@ -477,7 +478,7 @@ async def lsp_initialized(ls, params: InitializedParams):
         percent = ifile*100.0/len(files)
         ls.progress.report(
             token,
-            WorkDoneProgressReport(message=f'{pathlib.Path(file).name}', percentage = int(percent)),
+            WorkDoneProgressReport(message=f'{name}', percentage = int(percent)),
         )
         await asyncio.sleep(0.1)
     ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
