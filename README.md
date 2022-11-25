@@ -2,7 +2,7 @@
 This is an yet another markup language, <del>makeshift</del> markshift.
 
 Please see this video:
-[![youtube video](https://img.youtube.com/vi/iTF2UePbj3c/0.jpg)](https://www.youtube.com/watch?v=iTF2UePbj3c)
+[![youtube video](https://img.youtube.com/vi/dk67x74Z7cs/0.jpg)](https://www.youtube.com/watch?v=dk67x74Z7cs)
 
 ## Features
 - Simple markup syntax with `\t` and `[]`
