@@ -60,7 +60,8 @@ markshift_cli sample/input.ms --renderer markdown # or html
 
 - Setup Markshift Language Server (msls) with your client
     - binaries are available from https://github.com/ompugao/markshift/releases
-
+- vim-lsp is required.
+    - this forked version needs to be used to enable cliclable wikilink until it is merged: https://github.com/prabirshrestha/vim-lsp/pull/1390
 ```vim
 function! s:setup_markshift() abort
     let s:msls_client_id = lsp#register_server({
