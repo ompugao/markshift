@@ -59,7 +59,7 @@ markshift_cli sample/input.ms --renderer markdown # or html
 ## Zettelkasten with Markshift Language Server (msls)
 
 - Setup Markshift Language Server (msls) with your client
-    - binaries are available from lanhttps://github.com/ompugao/markshift/releases
+    - binaries are available from https://github.com/ompugao/markshift/releases
 
 ```vim
 function! s:setup_markshift() abort
