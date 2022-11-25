@@ -125,7 +125,7 @@ class Parser(object):
                 orig_e.line = iline
                 orig_e.column += offset
                 raise orig_e
-            raise e
+            raise ParserError(str(e), iline, 0)
         except ParserError as e:
             # should be handled above
             e.line = iline

@@ -198,6 +198,12 @@ class ElementTransformer(Transformer):
         return Path(path, True)
 
     def url_title(self, *args):
+        if len(args) == 1 and args[0] == None:
+            # must be only spaces, such as:
+            # [https://google.com/     ]
+            # we replace it with '-' to make it recognizable
+            # return '-'
+            raise ParserError("url title is empty", 0, 0)
         return ''.join([a.value for a in args])
 
     def expr_code_inline(self, code):
