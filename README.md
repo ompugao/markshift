@@ -44,12 +44,26 @@ Math with katex
 		sum_{i=0}^{10}{i} = 55
 	inline math: [$ O(n log(n)) $]
 ```
+## installation
+```sh
+git clone https://github.com/ompugao/markshift
+pip3 install -e markshift[languageserver]
+```
+
+## console app
+```sh
+cd markshift
+markshift_cli sample/input.ms --renderer markdown # or html
+```
 
 ## Zettelkasten with Markshift Language Server (msls)
+
 - Setup Markshift Language Server (msls) with your client
+    - binaries are available from lanhttps://github.com/ompugao/markshift/releases
+
 ```vim
 function! s:setup_markshift() abort
-	let s:msls_client_id = lsp#register_server({
+    let s:msls_client_id = lsp#register_server({
         \ 'name': 'msls',
         \ 'cmd': ['msls', '--never_steal_focus', '--always_on_top', '--zotero_path=~/Zotero'],
         \ 'allowlist': ['markshift'],
