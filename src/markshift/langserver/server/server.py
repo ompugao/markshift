@@ -329,7 +329,7 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
             return CompletionList(
                 is_incomplete=False,
                 items = [CompletionItem(label=command, kind=CompletionItemKind.Function,
-                                         filter_text=command, insert_text=command) for command in ['code', 'math', 'table', 'quote']],
+                                         filter_text=command, insert_text=command) for command in ['code', 'math', 'table', 'quote', 'img']],
             )
 
         lindex = l[:c].rfind('[')
