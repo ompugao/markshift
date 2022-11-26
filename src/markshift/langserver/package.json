@@ -4,7 +4,7 @@
   "author": "Open Law Library",
   "repository": "https://github.com/ompugao/markshift",
   "license": "Apache-2.0",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "publisher": "ompugao",
   "engines": {
     "vscode": "^1.62.0"
