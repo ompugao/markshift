@@ -41,7 +41,8 @@ from pygls.lsp.methods import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
                                TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN,
                                TEXT_DOCUMENT_DID_SAVE,
                                TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
-                               INITIALIZED)
+                               INITIALIZED,
+                               DOCUMENT_LINK)
 from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
                              CompletionItemKind,
                              CompletionParams, ConfigurationItem,
@@ -55,7 +56,10 @@ from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
                              Range, Registration, RegistrationParams,
                              SemanticTokens, SemanticTokensLegend, SemanticTokensParams,
                              Unregistration, UnregistrationParams,
-                             WorkspaceEdit)
+                             WorkspaceEdit,
+                             DocumentLink,
+                             DocumentLinkOptions,
+                             DocumentLinkParams)
 from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressEnd,
                                               WorkDoneProgressReport,
@@ -100,7 +104,6 @@ class MarkshiftLanguageServer(LanguageServer):
     CMD_HIDE_PREVIEWER = 'hidePreviewer'
     CMD_FORCE_REDRAW = 'forceRedraw'
     CMD_INSERT_IMAGE_FROM_CLIPBOARD = 'insertImageFromClipboard'
-    CMD_PROGRESS = 'progress'
     CMD_REGISTER_COMPLETIONS = 'registerCompletions'
     CMD_SHOW_CONFIGURATION_ASYNC = 'showConfigurationAsync'
     CMD_UNREGISTER_COMPLETIONS = 'unregisterCompletions'
@@ -239,18 +242,18 @@ class MarkshiftLanguageServer(LanguageServer):
             return tree, warnings
         return tree
 
-    def gather_wiki_links(self, tree):
+    def gather_wiki_elements(self, tree):
         ret = []
-        self._gather_wiki_links(tree, ret)
+        self._gather_wiki_elements(tree, ret)
         return ret
 
-    def _gather_wiki_links(self, tree, ret):
+    def _gather_wiki_elements(self, tree, ret):
         if type(tree) == WikiLinkElement:
             ret.append(tree)
         for e in tree.child_elements:
-            self._gather_wiki_links(e, ret)
+            self._gather_wiki_elements(e, ret)
         for e in tree.child_lines:
-            self._gather_wiki_links(e, ret)
+            self._gather_wiki_elements(e, ret)
 
     def shutdown(self,):
         super().shutdown()
@@ -397,10 +400,10 @@ async def did_change(ls, params: DidChangeTextDocumentParams):
     tree = _render_document(ls, params.text_document.uri)
     if tree is None:
         return
-
-    wikilinks = set([elm.link for elm in msls_server.gather_wiki_links(tree)])
+    wikielems = msls_server.gather_wiki_elements(tree)
     page = uri_to_link_name(params.text_document.uri)
-    update_wikilinks(page, wikilinks)
+    update_wikilink_connections(page, wikielems)
+    update_wikilink_node_info(page, wikielems)
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_CLOSE)
@@ -416,15 +419,33 @@ async def did_open(ls, params: DidOpenTextDocumentParams):
     ls.show_message('Text Document Did Open')
     tree = _render_document(ls, params.text_document.uri)
     page = uri_to_link_name(params.text_document.uri)
-    wikilinks = set([elm.link for elm in msls_server.gather_wiki_links(tree)])
+    wikielems = msls_server.gather_wiki_elements(tree)
     page = uri_to_link_name(params.text_document.uri)
-    update_wikilinks(page, wikilinks)
+    update_wikilink_connections(page, wikielems)
+    update_wikilink_node_info(page, wikielems)
 
 @msls_server.feature(TEXT_DOCUMENT_DID_SAVE)
 async def did_save(ls, params: DidSaveTextDocumentParams):
     pass
 
-def update_wikilinks(page, newlinks):
+
+def _wikielem_to_dict(wikielem,):
+    return {'link': wikielem.link,
+            'line': wikielem.line,
+            'column': wikielem.column,
+            'end_line': wikielem.end_line,
+            'end_column': wikielem.end_column}
+
+def update_wikilink_node_info(page, wikielems):
+    data = []
+    for e in wikielems:
+        data.append(_wikielem_to_dict(e))
+    msls_server.wikilink_graph.nodes[page]['wikilinks'] = data
+
+
+def update_wikilink_connections(page, wikielems):
+    newlinks = set([elm.link for elm in wikielems])
+
     oldlinks = set([v for k, v in msls_server.wikilink_graph.out_edges(page)])
     newlinks = set(newlinks)
     for wikilink in (newlinks - oldlinks):
@@ -463,7 +484,7 @@ async def lsp_initialized(ls, params: InitializedParams):
         # if True:
         try:
             tree = msls_server.parse_lines(lines)
-            wikilinks = msls_server.gather_wiki_links(tree)
+            wikilinks = msls_server.gather_wiki_elements(tree)
             name = path_to_link_name(file)
             msls_server.wikilink_graph.add_node(name)
             msls_server.wikilink_graph.add_edges_from([(name, e.link) for e in wikilinks])
@@ -479,25 +500,6 @@ async def lsp_initialized(ls, params: InitializedParams):
             WorkDoneProgressReport(message=f'{name}', percentage = int(percent)),
         )
         await asyncio.sleep(0.1)
-    ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
-
-
-@msls_server.command(MarkshiftLanguageServer.CMD_PROGRESS)
-async def progress(ls: MarkshiftLanguageServer, *args):
-    """Create and start the progress on the client."""
-    token = 'token'
-    # Create
-    await ls.progress.create_async(token)
-    # Begin
-    ls.progress.begin(token, WorkDoneProgressBegin(title='Indexing', percentage=0))
-    # Report
-    for i in range(1, 10):
-        ls.progress.report(
-            token,
-            WorkDoneProgressReport(message=f'{i * 10}%', percentage= i * 10),
-        )
-        await asyncio.sleep(2)
-    # End
     ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
 
 
@@ -517,6 +519,35 @@ async def register_completions(ls: MarkshiftLanguageServer, *args):
         ls.show_message('Error happened during completions registration.',
                         MessageType.Error)
 
+
+@msls_server.feature(
+    DOCUMENT_LINK,
+    DocumentLinkOptions(resolve_provider=True),
+)
+async def document_link(ls: MarkshiftLanguageServer, params: DocumentLinkParams):
+    try:
+        name = uri_to_link_name(params.text_document.uri)
+        if not name in msls_server.wikilink_graph.nodes():
+            log.warn('no such a page: %s'%params.text_document.uri)
+            return None
+
+        ret = []
+        for l in msls_server.wikilink_graph.nodes[name]['wikilinks']:
+            link = DocumentLink(
+                range=Range(
+                    start=Position(line=l['line']-1, character=l['column']-1),
+                    end=Position(line=l['end_line']-1, character=l['end_column']),
+                ),
+                target=uris.from_fs_path(str(pathlib.Path(msls_server.lsp.workspace.root_path) / (l['link'] + file_ext))),
+                tooltip="",
+                data="",
+            )
+            ret.append(link)
+        return ret
+    except Exception as e:
+        log.error("Error in Document Link:")
+        log.error(str(e))
+        return None
 
 @msls_server.command(MarkshiftLanguageServer.CMD_SHOW_CONFIGURATION_ASYNC)
 async def show_configuration_async(ls: MarkshiftLanguageServer, *args):
