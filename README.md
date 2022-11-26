@@ -1,7 +1,8 @@
 # Markshift
 This is an yet another markup language, <del>makeshift</del> markshift.
 
-Please see this video:
+Please see this video (at 2x speed):
+
 [![youtube video](https://img.youtube.com/vi/dk67x74Z7cs/0.jpg)](https://www.youtube.com/watch?v=dk67x74Z7cs)
 
 ## Features
