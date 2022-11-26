@@ -96,7 +96,7 @@ export function activate(context: ExtensionContext): void {
             throw new Error("`python.pythonPath` is not set");
         }
 
-        client = startLangServer(pythonPath, ["-m", "server"], cwd);
+        client = startLangServer(pythonPath, ["-m", "markshift.langserver.server"], cwd);
     }
 
     vscode.window.onDidChangeActiveTextEditor(editor => {
