@@ -26,6 +26,10 @@
         "title": "show previewer"
       },
       {
+        "command": "forceRedraw",
+        "title": "redraw previewer"
+      },
+      {
         "command": "registerCompletions",
         "title": "Register completions"
       },

@@ -21,11 +21,14 @@
 import * as net from "net";
 import * as path from "path";
 import { ExtensionContext, ExtensionMode, workspace } from "vscode";
+import * as vscode from 'vscode';
 import {
     LanguageClient,
     LanguageClientOptions,
     ServerOptions,
 } from "vscode-languageclient/node";
+
+let file_ext = '.ms';
 
 let client: LanguageClient;
 
@@ -95,6 +98,19 @@ export function activate(context: ExtensionContext): void {
 
         client = startLangServer(pythonPath, ["-m", "server"], cwd);
     }
+
+    vscode.window.onDidChangeActiveTextEditor(editor => {
+        if (editor == undefined) {
+            return;
+        }
+        if (!editor.document.uri.path.endsWith(file_ext)) {
+            return;
+        }
+        vscode.commands.executeCommand(
+            'forceRedraw',
+            editor.document.uri.toString(false), // skipencoding=false
+        );
+    }, null, context.subscriptions);
 
     context.subscriptions.push(client.start());
 }
