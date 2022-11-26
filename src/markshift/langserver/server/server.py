@@ -409,16 +409,15 @@ async def did_change(ls, params: DidChangeTextDocumentParams):
 @msls_server.feature(TEXT_DOCUMENT_DID_CLOSE)
 def did_close(server: MarkshiftLanguageServer, params: DidCloseTextDocumentParams):
     """Text document did close notification."""
-    server.show_message('Text Document Did Close')
     msls_server.render_body('', '')
 
 
 @msls_server.feature(TEXT_DOCUMENT_DID_OPEN)
 async def did_open(ls, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
-    ls.show_message('Text Document Did Open')
     tree = _render_document(ls, params.text_document.uri)
-    page = uri_to_link_name(params.text_document.uri)
+    if tree is None:
+        return
     wikielems = msls_server.gather_wiki_elements(tree)
     page = uri_to_link_name(params.text_document.uri)
     update_wikilink_connections(page, wikielems)
