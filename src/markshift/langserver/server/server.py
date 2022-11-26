@@ -103,8 +103,6 @@ class MarkshiftLanguageServer(LanguageServer):
     CMD_PROGRESS = 'progress'
     CMD_REGISTER_COMPLETIONS = 'registerCompletions'
     CMD_SHOW_CONFIGURATION_ASYNC = 'showConfigurationAsync'
-    CMD_SHOW_CONFIGURATION_CALLBACK = 'showConfigurationCallback'
-    CMD_SHOW_CONFIGURATION_THREAD = 'showConfigurationThread'
     CMD_UNREGISTER_COMPLETIONS = 'unregisterCompletions'
 
     CONFIGURATION_SECTION = 'MarkshiftLanguageServer'
@@ -484,47 +482,6 @@ async def lsp_initialized(ls, params: InitializedParams):
     ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
 
 
-@msls_server.feature(
-    TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
-    SemanticTokensLegend(
-        token_types = ["operator"],
-        token_modifiers = []
-    )
-)
-def semantic_tokens(ls: MarkshiftLanguageServer, params: SemanticTokensParams):
-    """See https://microsoft.github.io/language-server-protocol/specification#textDocument_semanticTokens
-    for details on how semantic tokens are encoded."""
-    
-    TOKENS = re.compile('".*"(?=:)')
-    
-    uri = params.text_document.uri
-    doc = ls.workspace.get_document(uri)
-
-    last_line = 0
-    last_start = 0
-
-    data = []
-
-    for lineno, line in enumerate(doc.lines):
-        last_start = 0
-
-        for match in TOKENS.finditer(line):
-            start, end = match.span()
-            data += [
-                (lineno - last_line),
-                (start - last_start),
-                (end - start),
-                0, 
-                0
-            ]
-
-            last_line = lineno
-            last_start = start
-
-    return SemanticTokens(data=data)
-
-
-
 @msls_server.command(MarkshiftLanguageServer.CMD_PROGRESS)
 async def progress(ls: MarkshiftLanguageServer, *args):
     """Create and start the progress on the client."""
@@ -574,45 +531,7 @@ async def show_configuration_async(ls: MarkshiftLanguageServer, *args):
 
         example_config = config[0].get('exampleConfiguration')
 
-        ls.show_message(f'jsonServer.exampleConfiguration value: {example_config}')
-
-    except Exception as e:
-        ls.show_message_log(f'Error ocurred: {e}')
-
-
-@msls_server.command(MarkshiftLanguageServer.CMD_SHOW_CONFIGURATION_CALLBACK)
-def show_configuration_callback(ls: MarkshiftLanguageServer, *args):
-    """Gets exampleConfiguration from the client settings using callback."""
-    def _config_callback(config):
-        try:
-            example_config = config[0].get('exampleConfiguration')
-
-            ls.show_message(f'jsonServer.exampleConfiguration value: {example_config}')
-
-        except Exception as e:
-            ls.show_message_log(f'Error ocurred: {e}')
-
-    ls.get_configuration(ConfigurationParams(items=[
-        ConfigurationItem(
-            scope_uri='',
-            section=MarkshiftLanguageServer.CONFIGURATION_SECTION)
-    ]), _config_callback)
-
-
-@msls_server.thread()
-@msls_server.command(MarkshiftLanguageServer.CMD_SHOW_CONFIGURATION_THREAD)
-def show_configuration_thread(ls: MarkshiftLanguageServer, *args):
-    """Gets exampleConfiguration from the client settings using thread pool."""
-    try:
-        config = ls.get_configuration(ConfigurationParams(items=[
-            ConfigurationItem(
-                scope_uri='',
-                section=MarkshiftLanguageServer.CONFIGURATION_SECTION)
-        ])).result(2)
-
-        example_config = config[0].get('exampleConfiguration')
-
-        ls.show_message(f'jsonServer.exampleConfiguration value: {example_config}')
+        ls.show_message(f'MarkshiftLanguageServer.exampleConfiguration value: {example_config}')
 
     except Exception as e:
         ls.show_message_log(f'Error ocurred: {e}')
