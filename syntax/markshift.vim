@@ -31,13 +31,15 @@ syn match  markshiftItalic   /\/\{1,}.*/ contained contains=@markshiftSBracketCo
 syn match  markshiftBig      /\*\{1,}.*/ contained contains=@markshiftSBracketContent,@markshiftSBracketLink
 " [_ markshift]
 syn match  markshiftUnder    /_\{1,}.*/  contained contains=@markshiftSBracketContent,@markshiftSBracketLink
+" [$ markshift$]
+syn match  markshiftInlineMath    /\$\{1,}.*\$/  contained contains=@markshiftSBracketContent,@markshiftSBracketLink
 
 " [url]
-syn match  markshiftSLink1   /https\?:\/\/\S\{1,}/              contained
+syn match  markshiftSLink1   /\w\{1,}:\/\/\S\{1,}/              contained
 " [url url_title]
-syn match  markshiftSLink2   /https\?:\/\/\S\{1,}\s\{1,}.\{1,}/ contained
+syn match  markshiftSLink2   /\w\{1,}:\/\/\S\{1,}\s\{1,}.\{1,}/ contained
 " [url_title url]
-syn match  markshiftSLink3   /.\{1,}\s\{1,}https\?:\/\/\S\{1,}/ contained
+syn match  markshiftSLink3   /.\{1,}\s\{1,}\w\{1,}:\/\/\S\{1,}/ contained
 
 " [@img markshift]
 syn match  markshiftSImg    /@img\{1,}.*/  contained
@@ -69,14 +71,15 @@ hi def link markshiftSLink1   Underlined
 hi def link markshiftSLink2   Underlined
 hi def link markshiftSLink3   Underlined
 hi def link markshiftTag      Underlined
-hi def link markshiftPageLink Underlined
-hi def link markshiftDLink    Underlined
+hi def link markshiftPageLink Structure
+"hi def link markshiftDLink    Underlined
 hi def link markshiftBig      Type
 hi def link markshiftStrong   Type
-hi def link markshiftItalic   Special
+hi def link markshiftItalic   Keyword
 hi def link markshiftUnder    Underlined
+hi def link markshiftInlineMath    Operator
 hi def link markshiftNumber   Type
 hi def link markshiftCode     String
-hi def link markshiftQuote    Comment
+hi def link markshiftQuote    SpecialComment
 hi def link markshiftStrike   Comment
 ""hi markshiftStrike term=strikethrough gui=strikethrough
