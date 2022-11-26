@@ -46,6 +46,7 @@ Math with katex
 	inline math: [$ O(n log(n)) $]
 ```
 ## installation
+Python >=3.9 is required.
 ```sh
 git clone https://github.com/ompugao/markshift
 pip3 install -e markshift[languageserver]
