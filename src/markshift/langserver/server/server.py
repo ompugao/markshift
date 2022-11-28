@@ -158,6 +158,9 @@ class MarkshiftLanguageServer(LanguageServer):
             pre {
                 tab-size: 4;
             }
+            pre code.hljs {
+                padding: 0.1em 1em 0.1em 1em;
+            }
             blockquote {
                 background: #4c4c4c5c;
                 padding: 0.5em 20px 0.5em 20px;
