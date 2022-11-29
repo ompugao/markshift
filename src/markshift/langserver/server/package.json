@@ -1,0 +1,55 @@
+{
+  "name": "markshift-langserver",
+  "version": "0.1.15",
+  "homepage": ".",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rehype-highlight": "^6.0.0",
+    "rehype-katex": "^6.0.2",
+    "rehype-parse": "^8.0.4",
+    "rehype-react": "^7.1.1",
+    "serve": "^14.1.2",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "react-scripts": "^5.0.1",
+    "run-script-os": "^1.1.6"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "npm run clean && npm run frontend:prod && run-script-os",
+    "frontend:test": "react-scripts test",
+    "frontend:eject": "react-scripts eject",
+    "frontend:dev": "BUILD_PATH='../../../../assets/gui' react-scripts build",
+    "frontend:prod": "BUILD_PATH='../../../../assets/gui' react-scripts build",
+    "clean": "run-script-os",
+    "clean:default": "rm -rf gui 2>/dev/null; rm -rf build 2>/dev/null; rm -rf dist 2>/dev/null; ",
+    "clean:windows": "if exist gui rd /S /Q gui & if exist build rd /S /Q build & if exist dist rd /S /Q dist",
+    "build:macos": "pyinstaller -F -w --add-data ../../../../assets:assets --onefile -n msls entrypoint.py",
+    "build:windows": "pyinstaller --add-data \"../../../../assets;assets\" -n msls entrypoint.py --onefile --noconsole",
+    "build:linux": "pyinstaller --add-data ../../../../assets:assets -n msls --onefile entrypoint.py"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

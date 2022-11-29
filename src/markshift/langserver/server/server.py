@@ -16,21 +16,11 @@
 ############################################################################
 import sys, os
 sys.path.append(os.path.abspath(''))
-import datetime
 import re
-import threading
 import logging
 import pathlib
-from functools import partial
-try:
-    import ujson as json
-except Exception:  # pylint: disable=broad-except
-    import json
 from io import StringIO
-
 import asyncio
-# import json
-import re
 import time
 import uuid
 from typing import Optional
@@ -131,77 +121,7 @@ class MarkshiftLanguageServer(LanguageServer):
             css.write(f.read())
         with open(retrieve_asset('highlightjs/styles/github-dark.min.css')) as f:
             css.write(f.read())
-        with open(retrieve_asset('dark-theme.css')) as f:
-            css.write(f.read())
-        css.write("""
-            .empty-line{
-                list-style-type: none;
-            }
-            .image {
-                vertical-align: top;
-            }
-            ul {
-                margin: 4px;
-            }
-            body {
-                font-size: 24px;
-                line-height: 1.5em;
-            }
-            .main-content {
-                margin: 20px;
-            }
-            .code-inline {
-                background-color: rgba(208, 208, 208, 0.08);
-                padding: 0.06em;
-                border-radius: 0.2em;
-            }
-            pre {
-                tab-size: 4;
-            }
-            pre code.hljs {
-                padding: 0.1em 1em 0.1em 1em;
-            }
-            blockquote {
-                background: #4c4c4c5c;
-                padding: 0.5em 20px 0.5em 20px;
-                margin-block-start: 0.5em;
-                margin-block-end: 0.5em;
-                margin-inline-start: 30px;
-                margin-inline-end: 30px;
-                color: #bbb;
-            }
-            .katex-version {display: none;}
-            .katex-version::after {content:"0.10.2 or earlier";}
-            """)
         self.css = css.getvalue()
-
-        js = StringIO()
-        with open(retrieve_asset('highlightjs/highlight.min.js')) as f:
-            js.write(f.read())
-        with open(retrieve_asset('katex/katex.min.js')) as f:
-            js.write(f.read())
-        with open(retrieve_asset('katex/contrib/auto-render.min.js')) as f:
-            js.write(f.read())
-        js.write("""
-        function on_wikilink_click(pagename) {
-            pywebview.api.on_wikilink_click(pagename)
-        }
-        hljs.highlightAll();
-        document.addEventListener("DOMContentLoaded", function() {
-            renderMathInElement(document.body, {
-                // customised options
-                // • auto-render specific keys, e.g.:
-                delimiters: [
-                    {left: '$$', right: '$$', display: false},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\[\\[', right: '\\]\\]', display: true}
-                ],
-                // • rendering keys, e.g.:
-                throwOnError : false
-            });
-        });
-        """)
-        self.js = js.getvalue()
 
     def set_previewer(self, previewer):
         self.previewer = previewer
@@ -217,15 +137,7 @@ class MarkshiftLanguageServer(LanguageServer):
 
     def render_content(self, title, content, backlinks=None):
         htmlio = StringIO()
-        htmlio.write("<!DOCTYPE html><html><head><style>")
-        htmlio.write(self.css)
-        htmlio.write("</style>")
-        htmlio.write('<script type="text/javascript">')
-        htmlio.write(self.js)
-        htmlio.write('</script></head>')
-        htmlio.write('<body>')
         htmlio.write('<div class="main-content">')
-        # htmlio.write(f'<h1>{title}</h1>')
         htmlio.write(content)
         if backlinks:
             htmlio.write('<hr id="hr-footer" style="width:95%; margin-top: 0.5em; margin-bottom: 0.5em; background-color: #959595;"/>')
@@ -233,11 +145,26 @@ class MarkshiftLanguageServer(LanguageServer):
             htmlio.write(f'<img class="icon-cited" src="{icon_uri}" alt="This page is cited from the followings:" width=15 height=15 style="vertical-align: middle;"/>')
             htmlio.write('<ul id="backlink-list" style="padding-inline-start: 20px">')
             for backlink in backlinks:
-                htmlio.write(f'<li><a href=\'javascript:on_wikilink_click("{backlink}\");\'>{backlink}</a></li>')
+                htmlio.write(f'<li><a href=\'javascript:pywebview.api.on_wikilink_click("{backlink}\");\'>{backlink}</a></li>')
             htmlio.write('</ul>')
-        htmlio.write('</div></body></html>')
-        self.previewer.load_html(htmlio.getvalue())
+        htmlio.write('</div>')
+
+        localhtml = pathlib.Path(retrieve_asset('gui/index.html'))
+        if self.previewer.get_current_url() != localhtml.as_uri():
+            self.previewer.load_url(localhtml)
+            self.previewer.load_css(self.css)
+        # log.info('current_url: %s'%self.previewer.get_current_url())
+        # log.info('localhtml: %s'%localhtml)
         self.previewer.set_title(title)
+        content = repr(htmlio.getvalue())
+        self.previewer.evaluate_js("""
+            if (!window.pywebview.state) {
+              window.addEventListener('pywebview_state_ready', function() {
+                 window.pywebview.state.setContent(%s)
+              });
+            } else {
+              window.pywebview.state.setContent(%s);
+            }"""%(content, content))
 
     def parse_lines(self, lines, return_warnings=False):
         tree, warnings = self.parser.parse(lines, return_warnings=True)
@@ -275,6 +202,7 @@ def _render_document(ls, uri):
     try:
         tree, warnings = msls_server.parse_lines(lines, return_warnings=True)
         backlinks = [linked for linked, _ in msls_server.wikilink_graph.in_edges(uri_to_link_name(uri))]
+        wikielems = msls_server.gather_wiki_elements(tree)
         
         msls_server.render_content(name, tree.render(), backlinks)
         diags = []
