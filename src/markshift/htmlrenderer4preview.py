@@ -6,6 +6,7 @@ import urllib.parse
 import logging
 import pathlib
 from pygls.uris import from_fs_path
+from .element import *
 
 import requests
 import functools
@@ -56,9 +57,23 @@ def get_twitter_embed(tweet_url: str):
 
 class HtmlRenderer4Preview(HtmlRenderer):
 
+    def render(self, elem):
+        io = StringIO()
+        for el in elem.child_elements:
+            io.write(el.render())
+        if len(elem.child_lines) > 0:
+            for line in elem.child_lines:
+                io.write(line.render())
+                if (type(line.child_elements[0]) not in [MathElement, \
+                        QuoteElement, CodeElement, TableElement])\
+                        and len(line.child_lines) == 0:
+                    io.write('<br/>')
+        tmp = io.getvalue()
+        return tmp
+
     def render_wikilink(self, elem):
         io = StringIO()
-        io.write(f'<a href=\'javascript:on_wikilink_click("{elem.link}\");\'>{elem.link}</a>')
+        io.write(f'<a href=\'javascript:pywebview.api.on_wikilink_click("{elem.link}\");\'>{elem.link}</a>')
         return io.getvalue()
 
     def render_link(self, elem):
@@ -102,7 +117,7 @@ class HtmlRenderer4Preview(HtmlRenderer):
             io.write(html.escape(elem.content))
             io.write('</code>')
         else:
-            io.write('<pre><code class="')
+            io.write('<pre><code class="language-')
             io.write(elem.lang)
             io.write('">')
             for line in elem.child_lines:
@@ -110,3 +125,18 @@ class HtmlRenderer4Preview(HtmlRenderer):
                 io.write('\n')
             io.write('</code></pre>')
         return io.getvalue()
+
+    def render_math(self, elem):
+        io = StringIO()
+        if elem.inline == True:
+            io.write('<span class="math math-inline"><span class="katex">')
+            io.write(elem.content)
+            io.write('</span></span>')
+        else:
+            io.write('<div class="math math-display"><span class="katex-display">')
+            for line in elem.child_lines:
+                io.write(line.render())
+                io.write('\n')
+            io.write('</span></div>')
+        return io.getvalue()
+

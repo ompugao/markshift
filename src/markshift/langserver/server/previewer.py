@@ -27,6 +27,18 @@ class BasePreviewer(object):
     def load_html(self, html):
         pass
 
+    def load_url(self, url):
+        pass
+
+    def load_css(self, css):
+        pass
+
+    def evaluate_js(self, js):
+        pass
+
+    def get_current_url(self, ):
+        return ''
+
     def destroy(self,):
         pass
 
@@ -79,7 +91,7 @@ class PywebviewPreviewer(BasePreviewer):
 
 
     def start(self, fn, args):
-        webview.start(self._start, (fn, args), gui='qt', debug=False)
+        webview.start(self._start, (fn, args), gui='qt', debug=True)
 
 
     def _start(self, fn, args):
@@ -110,6 +122,18 @@ class PywebviewPreviewer(BasePreviewer):
 
     def load_html(self, html):
         self.window.load_html(html)
+
+    def load_url(self, url):
+        self.window.load_url(url)
+
+    def load_css(self, css):
+        self.window.load_css(css)
+
+    def evaluate_js(self, js):
+        self.window.evaluate_js(js)
+
+    def get_current_url(self, ):
+        return self.window.get_current_url()
 
     def destroy(self,):
         self.window.destroy()
