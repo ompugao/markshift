@@ -12,29 +12,27 @@ syn match  markshiftTag      /#\S\{1,}/
 """ Brackets
 syn cluster markshiftSBracketContent contains=markshiftBig,markshiftItalic,markshiftStrike,markshiftUnder,markshiftBody,markshiftInlineMath
 syn cluster markshiftSBracketLink    contains=markshiftSLink1,markshiftSLink2,markshiftSLink3
-syn region  markshiftSBracket        keepend start=/\[/ms=s+1 end=/\]/me=e-1 contains=@markshiftSBracketContent,@markshiftSBracketLink,markshiftPageLink oneline transparent
+syn region  markshiftSBracket        keepend start=/\[/ms=s+1 end=/\]/me=e-1 contains=@markshiftSBracketLink,@markshiftSBracketContent,markshiftPageLink oneline transparent
 
-" [[markshift]]
-syn match  markshiftStrong   /\[\[[^]]\{1,}\]\]/
 " [markshift]
 syn match  markshiftPageLink /[^\]]\{1,}/    contained
 " [-*/_ markshift]
-syn match  markshiftBody     /\s\{1,}.*/ contained contains=@markshiftSLink transparent
+syn match  markshiftBody     /\s\{1,}.\+/ contained transparent
 " [- markshift]
-syn match  markshiftStrike   /-\{1,}.*/  contained contains=@markshiftSBracketContent
+syn match  markshiftStrike   /-\{1,}.\+/  contained contains=@markshiftSBracketContent
 " [/ markshift]
-syn match  markshiftItalic   /\/\{1,}.*/ contained contains=@markshiftSBracketContent
+syn match  markshiftItalic   /\/\{1,}.\+/ contained contains=@markshiftSBracketContent
 " [* markshift]
-syn match  markshiftBig      /\*\{1,}.*/ contained contains=@markshiftSBracketContent
+syn match  markshiftBig      /\*\{1,}.\+/ contained contains=@markshiftSBracketContent
 " [_ markshift]
-syn match  markshiftUnder    /_\{1,}.*/  contained contains=@markshiftSBracketContent
+syn match  markshiftUnder    /_\{1,}.\+/  contained contains=@markshiftSBracketContent
 
 " [$ markshift$]
 syn include @tex syntax/tex.vim
 syn region markshiftInlineMath start="\\\@<!\$" end="\$" skip="\\\$" contains=@tex keepend
 
 " [url]
-let b:url_regex = '\w\{1,}:\/\/\S\{1,}'
+let url_regex = '\w\{1,}:\/\/\S\{1,}'
 "syn match  markshiftSLink1   /\w\{1,}:\/\/\S\{1,}/              contained
 execute 'syn match  markshiftSLink1  /' . url_regex . '/        contained'
 " [url url_title]
@@ -70,7 +68,6 @@ hi def link markshiftSImg Type
 "hi def link markshiftSLink3   Underlined
 "hi def link markshiftTag      Underlined
 hi def link markshiftBig      Type
-hi def link markshiftStrong   Type
 hi def link markshiftItalic   Keyword
 hi def link markshiftUnder    Underlined
 hi def link markshiftInlineMath    Operator
