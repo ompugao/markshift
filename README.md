@@ -49,6 +49,10 @@ Math with katex
 Python >=3.9 is required.
 ```sh
 git clone https://github.com/ompugao/markshift
+cd markshift/src/markshift/langserver
+npm install
+npm run frontend:prod
+cd -
 pip3 install -e markshift[languageserver]
 ```
 
