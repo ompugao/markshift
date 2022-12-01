@@ -442,6 +442,7 @@ def update_wikilink_node_info(page, wikielems):
     data = []
     for e in wikielems:
         data.append(_wikielem_to_dict(e))
+    msls_server.wikilink_graph.add_node(page)
     msls_server.wikilink_graph.nodes[page]['wikilinks'] = data
 
 
@@ -450,6 +451,7 @@ def update_wikilink_connections(page, wikielems):
 
     oldlinks = set([v for k, v in msls_server.wikilink_graph.out_edges(page)])
     newlinks = set(newlinks)
+    msls_server.wikilink_graph.add_node(page)
     for wikilink in (newlinks - oldlinks):
         msls_server.wikilink_graph.add_edge(page, wikilink)
     for wikilink in (oldlinks - newlinks):
