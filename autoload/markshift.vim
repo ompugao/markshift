@@ -116,3 +116,17 @@ function! markshift#concat_view(argstr) abort
 	call s:_concat_view(a:argstr)
 endfunction
 
+function! markshift#export_markdown(buf) abort
+	if lsp#get_server_status('msls') !=# 'running'
+		return
+	endif
+	let l:path = lsp#utils#get_buffer_uri(a:buf)
+	let params = {}
+	let params['bufnr'] = a:buf
+	let params['server_name'] = 'msls'
+	let params['command_name'] = 'exportMarkdown'
+	let params['command_args'] = {}
+	let params['command_args']['buffer_uri'] = l:path
+	call lsp#ui#vim#execute_command#_execute(params)
+endfunction
+

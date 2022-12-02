@@ -49,7 +49,8 @@ from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
                              WorkspaceEdit,
                              DocumentLink,
                              DocumentLinkOptions,
-                             DocumentLinkParams)
+                             DocumentLinkParams,
+                             ShowDocumentParams)
 from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
                                               WorkDoneProgressEnd,
                                               WorkDoneProgressReport,
@@ -60,6 +61,7 @@ from pygls import uris
 from markshift.exception import ParserError
 import markshift.parser
 # import markshift.htmlrenderer
+import markshift.markdownrenderer
 import markshift.htmlrenderer4preview
 from .zotero import zotero_comp
 from markshift.element import WikiLinkElement
@@ -93,6 +95,7 @@ class MarkshiftLanguageServer(LanguageServer):
     CMD_SHOW_PREVIEWER = 'showPreviewer'
     CMD_HIDE_PREVIEWER = 'hidePreviewer'
     CMD_FORCE_REDRAW = 'forceRedraw'
+    CMD_EXPORT_MARKDOWN = 'exportMarkdown'
     CMD_INSERT_IMAGE_FROM_CLIPBOARD = 'insertImageFromClipboard'
     CMD_REGISTER_COMPLETIONS = 'registerCompletions'
     CMD_SHOW_CONFIGURATION_ASYNC = 'showConfigurationAsync'
@@ -108,6 +111,8 @@ class MarkshiftLanguageServer(LanguageServer):
 
         renderer = markshift.htmlrenderer4preview.HtmlRenderer4Preview()
         self.parser = markshift.parser.Parser(renderer)
+
+        self.markdown_parser = markshift.parser.Parser(markshift.markdownrenderer.MarkdownRenderer())
 
         self._initialize_assets()
 
@@ -302,6 +307,22 @@ async def force_redraw(ls, args):
     log.debug('args: %s'%args)
     uri = args[0]
     _render_document(ls, uri)
+
+@msls_server.command(MarkshiftLanguageServer.CMD_EXPORT_MARKDOWN)
+async def export_markdown(ls, args):
+    log.debug('args: %s'%args)
+    uri = args[0]
+
+    text_doc = ls.workspace.get_document(uri)
+    lines = text_doc.source.splitlines(keepends=False)
+    text = msls_server.markdown_parser.parse(lines).render()
+
+    mduri = str(uri).removesuffix('.ms') + ".md"  # ensure suffix
+    with open(uris.to_fs_path(mduri), 'w') as f:
+        f.write(text)
+    params = ShowDocumentParams(
+            uri = mduri)
+    msls_server.show_document(params)
 
 # @msls_server.command(MarkshiftLanguageServer.CMD_INSERT_IMAGE_FROM_CLIPBOARD)
 # async def insert_image_from_clipboard(ls, *args):
