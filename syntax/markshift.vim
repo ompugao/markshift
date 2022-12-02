@@ -52,15 +52,15 @@ syn match  markshiftSImg    /\[\zs@img\s\{1,}.*\ze\]/
 
 """ Code
 " [`"markshift"`]
-syn region markshiftCode     start=/\[`/ end=/`\]/ skip=/\\`/ oneline
+syn region markshiftInlineCode     start=/\[`/ end=/`\]/ skip=/\\`/ oneline
 " $ ./markshift.sh or % ./markshift.sh
 "syn region markshiftCode     start=/^\s*\$/ start=/^\s*%/ end=/$/
 " [@code lang]
 syn region markshiftCode     start=/^\z(\s*\)\[@code \(\S\+\)\]/ skip=/^\z1\s/ end=/^/
 " [@math lang]
-syn region markshiftCode     start=/^\z(\s*\)\[@math \(\S\+\)\]/ skip=/^\z1\s/ end=/^/
+syn region markshiftMath     matchgroup=texDelimiter start=/^\z(\s*\)\[@math\]/ skip=/^\z1\s/ end=/^/ contains=@texMathZoneGroup keepend
 " [@math quote]
-syn region markshiftQuote     start=/^\z(\s*\)\[@quote \(\S\+\)\]/ skip=/^\z1\s/ end=/^/
+syn region markshiftQuote     start=/^\z(\s*\)\[@quote\]/ skip=/^\z1\s/ end=/^/
 
 """ Highlight
 
@@ -77,6 +77,8 @@ hi def link markshiftItalic   Keyword
 hi def link markshiftUnder    Underlined
 hi def link markshiftInlineMath    Operator
 hi def link markshiftNumber   Type
+hi def link markshiftInlineCode     String
 hi def link markshiftCode     String
+"hi def link markshiftMath     Operator
 hi def link markshiftQuote    SpecialComment
 hi def link markshiftStrike   Comment
