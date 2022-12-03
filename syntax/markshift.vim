@@ -43,9 +43,9 @@ syn region markshiftInlineMath start="\\\@<!\$" end="\$" skip="\\\$" contains=@t
 let url_regex = '\w\{1,}:\/\/\S\{1,}'
 execute 'syn match  markshiftSLink1  /\zs' . url_regex . '\ze/        contained'
 " [url url_title]
-execute 'syn match  markshiftSLink2  /\zs\s*' . url_regex . '\ze\s\{1,}.\{1,}/ contained conceal cchar=🔗'
+execute 'syn match  markshiftSLink2  /\zs\s*' . url_regex . '\s\{1,}\ze.\{1,}/ contained conceal cchar=🔗'
 " [url_title url]
-execute 'syn match  markshiftSLink3   /.\{1,}\s\{1,}\zs' . url_regex . '\ze/ contained conceal cchar=🔗'
+execute 'syn match  markshiftSLink3   /.\{1,}\zs\s\{1,}' . url_regex . '\ze/ contained conceal cchar=🔗'
 
 " [@img markshift]
 syn match  markshiftSImg    /\[\zs@img\s\{1,}.*\ze\]/
