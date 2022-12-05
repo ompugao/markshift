@@ -24,6 +24,7 @@ import asyncio
 import time
 import uuid
 from typing import Optional
+import tempfile
 
 import networkx as nx
 
@@ -317,8 +318,9 @@ async def export_markdown(ls, args):
     lines = text_doc.source.splitlines(keepends=False)
     text = msls_server.markdown_parser.parse(lines).render()
 
-    mduri = str(uri).removesuffix('.ms') + ".md"  # ensure suffix
-    with open(uris.to_fs_path(mduri), 'w') as f:
+    name = str(pathlib.Path(uris.to_fs_path(uri)).name).removesuffix('.ms')
+    with tempfile.NamedTemporaryFile(mode='w', prefix=name, suffix='.md', delete=False) as f:
+        mduri = uris.from_fs_path(f.name)
         f.write(text)
     params = ShowDocumentParams(
             uri = mduri)
