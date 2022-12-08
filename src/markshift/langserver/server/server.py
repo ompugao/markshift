@@ -119,7 +119,7 @@ class MarkshiftLanguageServer(LanguageServer):
 
 
         self.wikilink_graph = nx.DiGraph()
-        self.managed_docs_wikilinks = dict()
+        self.saved_graph_path = None
 
     def _initialize_assets(self):
         css = StringIO()
@@ -379,8 +379,9 @@ async def did_open(ls, params: DidOpenTextDocumentParams):
 
 @msls_server.feature(TEXT_DOCUMENT_DID_SAVE)
 async def did_save(ls, params: DidSaveTextDocumentParams):
-    pass
-
+    msls_server.saved_graph_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(msls_server.saved_graph_path, 'wb') as f:
+        pickle.dump(msls_server.wikilink_graph, f)
 
 def _wikielem_to_dict(wikielem,):
     return {'link': wikielem.link,
@@ -425,6 +426,17 @@ def path_to_link_name(path):
 @msls_server.feature(INITIALIZED)
 async def lsp_initialized(ls, params: InitializedParams):
     """Lsp is initialized. The server will start scanning files"""
+    msls_server.saved_graph_path = pathlib.Path(ls.workspace.root_path) / '.markshift' / 'graph.pkl'
+
+    if msls_server.saved_graph_path.exists():
+        log.info(f'{msls_server.saved_graph_path} exists!')
+        with open(msls_server.saved_graph_path, 'rb') as f:
+            msls_server.wikilink_graph = pickle.load(f)
+    else:
+        log.info(f'{msls_server.saved_graph_path} does not exists! scanning started')
+        await scan_files(ls)
+
+async def scan_files(ls):
     if not ls.workspace.is_local():
         return
     ls.show_message('Scanning started')
@@ -455,6 +467,9 @@ async def lsp_initialized(ls, params: InitializedParams):
             WorkDoneProgressReport(message=f'{name}', percentage = int(percent)),
         )
         await asyncio.sleep(0.1)
+    msls_server.saved_graph_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(msls_server.saved_graph_path, 'wb') as f:
+        pickle.dump(msls_server.wikilink_graph, f)
     ls.progress.end(token, WorkDoneProgressEnd(message='Finished'))
 
 
