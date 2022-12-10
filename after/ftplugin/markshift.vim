@@ -17,6 +17,11 @@ function! s:hide_previewer() abort
 endfunction
 
 setlocal suffixesadd=.ms
+
+" conceal+wrap in vim/neovim is still weird
+" see https://github.com/vim/vim/pull/10442
+setlocal nowrap
+
 nnoremap <silent> gf :call markshift#open_wikilink(expand('<cfile>'))<CR>
 vnoremap <silent> gf :call markshift#open_wikilink(expand(@*))<CR>
 
