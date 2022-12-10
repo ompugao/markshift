@@ -93,3 +93,19 @@ blockquote {
   margin-inline-end: 30px;
   color: #bbb;
 }
+table tbody tr {
+  border-bottom: 1px solid #7a7a7a;
+}
+table tbody tr td {
+  padding: 0.3em;
+}
+
+table tbody tr:nth-of-type(odd) {
+  background-color: #072300;
+}
+table tbody tr:nth-of-type(even) {
+  background-color: #000b39;
+}
+table tbody tr:last-of-type {
+  border-bottom: 2px solid #009879;
+}
