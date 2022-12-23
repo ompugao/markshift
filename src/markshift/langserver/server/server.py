@@ -16,12 +16,10 @@
 ############################################################################
 import sys, os
 sys.path.append(os.path.abspath(''))
-import re
 import logging
 import pathlib
 from io import StringIO
 import asyncio
-import time
 import uuid
 from typing import Optional
 import tempfile
@@ -29,34 +27,38 @@ import tempfile
 import networkx as nx
 import pickle
 
-from pygls.lsp.methods import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
-                               TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN,
-                               TEXT_DOCUMENT_DID_SAVE,
-                               TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
-                               INITIALIZED,
-                               DOCUMENT_LINK)
-from pygls.lsp.types import (CompletionItem, CompletionList, CompletionOptions,
-                             CompletionItemKind,
-                             CompletionParams, ConfigurationItem,
-                             ConfigurationParams, Diagnostic,
-                             DidChangeTextDocumentParams,
-                             DidCloseTextDocumentParams,
-                             DidOpenTextDocumentParams,
-                             DidSaveTextDocumentParams,
-                             InitializedParams,
-                             MessageType, Position,
-                             Range, Registration, RegistrationParams,
-                             SemanticTokens, SemanticTokensLegend, SemanticTokensParams,
-                             Unregistration, UnregistrationParams,
-                             WorkspaceEdit,
-                             DocumentLink,
-                             DocumentLinkOptions,
-                             DocumentLinkParams,
-                             ShowDocumentParams)
-from pygls.lsp.types.basic_structures import (WorkDoneProgressBegin,
-                                              WorkDoneProgressEnd,
-                                              WorkDoneProgressReport,
-                                              DiagnosticSeverity)
+from lsprotocol.types import (TEXT_DOCUMENT_COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
+                              TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN,
+                              TEXT_DOCUMENT_DID_SAVE,
+                              TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
+                              INITIALIZED,
+                              TEXT_DOCUMENT_DOCUMENT_LINK,
+                              TEXT_DOCUMENT_HOVER)
+from lsprotocol.types import (CompletionItem, CompletionList, CompletionOptions,
+                              CompletionItemKind,
+                              CompletionParams, ConfigurationItem,
+                              ConfigurationParams, Diagnostic,
+                              DidChangeTextDocumentParams,
+                              DidCloseTextDocumentParams,
+                              DidOpenTextDocumentParams,
+                              DidSaveTextDocumentParams,
+                              InitializedParams,
+                              MessageType, Position,
+                              Range, Registration, RegistrationParams,
+                              SemanticTokens, SemanticTokensLegend, SemanticTokensParams,
+                              Unregistration, UnregistrationParams,
+                              WorkspaceEdit,
+                              DocumentLink,
+                              DocumentLinkOptions,
+                              DocumentLinkParams,
+                              ShowDocumentParams,
+                              HoverOptions,
+                              Hover,
+                              HoverParams)
+from lsprotocol.types import (WorkDoneProgressBegin,
+                              WorkDoneProgressEnd,
+                              WorkDoneProgressReport,
+                              DiagnosticSeverity)
 from pygls.server import LanguageServer
 from pygls import uris
 
@@ -254,7 +256,7 @@ def _render_document(ls, uri):
     return tree
 
 
-@msls_server.feature(COMPLETION, CompletionOptions(trigger_characters=['[', '@']))
+@msls_server.feature(TEXT_DOCUMENT_COMPLETION, CompletionOptions(trigger_characters=['[', '@']))
 def completions(params: Optional[CompletionParams] = None) -> CompletionList:
     """Returns completion items."""
 
@@ -293,6 +295,13 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
         items = items,
     )
 
+@msls_server.feature(TEXT_DOCUMENT_HOVER, HoverOptions())
+def hover(params: HoverParams) -> Optional[Hover]:
+    doc = msls_server.lsp.workspace.get_document(params.text_document.uri)
+    l = doc.lines[params.position.line]
+    c = params.position.character
+
+    return None
 
 @msls_server.command(MarkshiftLanguageServer.CMD_SHOW_PREVIEWER)
 async def show_previewer(ls, *args):
@@ -480,7 +489,7 @@ async def register_completions(ls: MarkshiftLanguageServer, *args):
     params = RegistrationParams(registrations=[
                 Registration(
                     id=str(uuid.uuid4()),
-                    method=COMPLETION,
+                    method=TEXT_DOCUMENT_COMPLETION,
                     register_options={"triggerCharacters": "[':']"})
              ])
     response = await ls.register_capability_async(params)
@@ -492,7 +501,7 @@ async def register_completions(ls: MarkshiftLanguageServer, *args):
 
 
 @msls_server.feature(
-    DOCUMENT_LINK,
+    TEXT_DOCUMENT_DOCUMENT_LINK,
     DocumentLinkOptions(resolve_provider=True),
 )
 async def document_link(ls: MarkshiftLanguageServer, params: DocumentLinkParams):
@@ -543,7 +552,7 @@ async def show_configuration_async(ls: MarkshiftLanguageServer, *args):
 async def unregister_completions(ls: MarkshiftLanguageServer, *args):
     """Unregister completions method on the client."""
     params = UnregistrationParams(unregisterations=[
-        Unregistration(id=str(uuid.uuid4()), method=COMPLETION)
+        Unregistration(id=str(uuid.uuid4()), method=TEXT_DOCUMENT_COMPLETION)
     ])
     response = await ls.unregister_capability_async(params)
     if response is None:

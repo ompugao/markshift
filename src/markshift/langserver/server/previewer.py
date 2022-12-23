@@ -4,8 +4,9 @@ import logging
 import pathlib
 import time
 import webview
-from pygls.lsp.types.window import ShowDocumentParams
-from pygls.lsp.types import (Position, Range)
+from lsprotocol.types import ShowDocumentParams
+import time
+from lsprotocol.types import (Position, Range)
 import platformdirs
 from .utils import debounce
 
