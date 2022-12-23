@@ -17,6 +17,7 @@ function! s:hide_previewer() abort
 endfunction
 
 setlocal suffixesadd=.ms
+setlocal noexpandtab  " hard tab is important in markshift
 
 " conceal+wrap in vim/neovim is still weird
 " see https://github.com/vim/vim/pull/10442
