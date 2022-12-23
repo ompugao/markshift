@@ -27,6 +27,7 @@ from typing import Optional
 import tempfile
 
 import networkx as nx
+import pickle
 
 from pygls.lsp.methods import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
                                TEXT_DOCUMENT_DID_CLOSE, TEXT_DOCUMENT_DID_OPEN,
