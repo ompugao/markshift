@@ -73,6 +73,8 @@ import urllib
 import glob
 import pathlib
 
+from thefuzz import process as fuzzprocess
+
 log = logging.getLogger(__name__)
 
 
@@ -277,13 +279,19 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
         rindex = l[:c].rfind(']')
         if lindex < 0 or lindex < rindex:
             items = []
-        #else:
-        elif lindex == c-1:  # complete only when typed '['
-            # typedchrs = l[index+1:c]
-            # TODO fuzzy match?
-            # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
-            items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
-            if msls_server.zotero_path is not None:
+        else:
+        # elif lindex == c-1:  # complete only when typed '['
+            typedchrs = l[lindex+1:c]
+            if len(typedchrs) == 0:
+                items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
+            else:
+                # fuzzy match instead of startswith
+                # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
+                wikilinks = map(lambda x: x[0],
+                       fuzzprocess.extractBests(typedchrs, list(msls_server.wikilink_graph.nodes()),
+                                                score_cutoff=30, limit=None))
+                items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in wikilinks]
+            if msls_server.zotero_path is not None and len(typedchrs) == 0:
                 zoteroitems = zotero_comp(msls_server.lsp, msls_server.zotero_path)
                 if zoteroitems is not None:
                     items.extend([CompletionItem(label='Z: '+title, kind=CompletionItemKind.Reference, insert_text=inserttext) for title, inserttext in zoteroitems])
