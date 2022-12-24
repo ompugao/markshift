@@ -284,6 +284,8 @@ def completions(params: Optional[CompletionParams] = None) -> CompletionList:
             typedchrs = l[lindex+1:c]
             if len(typedchrs) == 0:
                 items = [CompletionItem(label=wikilink, kind=CompletionItemKind.Reference) for wikilink in msls_server.wikilink_graph.nodes()]
+            elif ' ' in typedchrs:
+                items = []
             else:
                 # fuzzy match instead of startswith
                 # items = [CompletionItem(label=wikilink) for wikilink in msls_server.wikilink_graph.nodes() if wikilink.startswith(typedchrs)]
