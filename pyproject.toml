@@ -20,7 +20,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 dev = ["pysen", "flake8==4.0.1", "isort==5.10.1", "black==21.4b2", "mypy==0.910", "ipython", "pyinstaller"]
 # previewer = ["pywebview[qt]", "python-lsp-jsonrpc"]
-languageserver = ["pywebview[qt]", "pygls", "platformdirs", "networkx", "requests"]
+languageserver = ["pywebview[qt]", "pygls", "platformdirs", "thefuzz[speedup]", "networkx", "requests"]
 
 [project.scripts]
 markshift_cli="markshift.cli.main:main"
