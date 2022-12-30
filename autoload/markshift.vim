@@ -124,8 +124,7 @@ function! markshift#export_markdown(buf) abort
 	let params['bufnr'] = a:buf
 	let params['server_name'] = 'msls'
 	let params['command_name'] = 'exportMarkdown'
-	let params['command_args'] = {}
-	let params['command_args']['buffer_uri'] = l:path
+	let params['command_args'] = [l:path]
 	call lsp#ui#vim#execute_command#_execute(params)
 endfunction
 
