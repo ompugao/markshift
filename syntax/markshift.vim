@@ -37,7 +37,7 @@ syn match  markshiftUnder    /_\{1,}.\+/  contained contains=@markshiftSBracketC
 
 " [$ markshift$]
 syn include @tex syntax/tex.vim
-syn region markshiftInlineMath start="\\\@<!\$" end="\$" skip="\\\$" contains=@tex keepend
+syn region markshiftInlineMath start="\\\@<!\$" end="\$" skip="\\\$" contained contains=@tex keepend
 
 " [url]
 let url_regex = '\w\{1,}:\/\/\S\{1,}'
