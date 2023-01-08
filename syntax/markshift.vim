@@ -15,7 +15,7 @@ syn cluster markshiftSBracketContent contains=markshiftBig,markshiftItalic,marks
 syn cluster markshiftSBracketLink    contains=markshiftSLink1,markshiftSLink2,markshiftSLink3
 "syn region  markshiftSLink        keepend start=/\[/ms=s+1 end=/\]/me=e-1 contains=@markshiftSBracketLink oneline transparent contained
 syn region  markshiftSBracket        keepend start=/\[/ms=s+1 end=/\]/me=e-1 contains=@markshiftSBracketLink oneline
-syn match markshiftSBracketNoURL /\[\(.\+:\/\/\\*\)\@!.*\]/ms=s+1,me=e-1 keepend contains=@markshiftSBracketContent,markshiftPageLink
+syn match markshiftSBracketNoURL /\[\(.\+:\/\/\\*\)\@!.\{-}\]/ms=s+1,me=e-1 keepend contains=@markshiftSBracketContent,markshiftPageLink
 
 " [markshift]
 " do not match url!
