@@ -49,7 +49,10 @@ def get_twitter_embed(tweet_url: str):
 
     api = "https://publish.twitter.com/oembed?url={}".format(tweet_url)
     res = requests.get(api)
-    j = res.json()
+    try:
+        j = res.json()
+    except requests.exceptions.JSONDecodeError as e:
+        return None
     if 'html' in j.keys():
         return j['html']
     else:
