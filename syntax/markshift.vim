@@ -67,10 +67,10 @@ syn region markshiftQuote     start=/^\z(\s*\)\[@quote\]/ skip=/^\z1\s/ end=/^/
 hi def link markshiftTitle    Function
 hi def link markshiftPageLink Structure
 hi def link markshiftSImg Type
-hi def link markshiftSBracket Underlined
-hi def link markshiftSLink1   Underlined
-hi def link markshiftSLink2   Underlined
-hi def link markshiftSLink3   Underlined
+hi def link markshiftSBracket Operator
+hi def link markshiftSLink1   Operator
+hi def link markshiftSLink2   Operator
+hi def link markshiftSLink3   Operator
 "hi def link markshiftTag      Underlined
 hi def link markshiftBig      Type
 hi def link markshiftItalic   Keyword
