@@ -51,7 +51,9 @@ class Parser(object):
 
     def _parse_line(self, root, line, iline, parser_warnings):
         depth = self.regex_indent.match(line).end()
-        if self.state.parse_state != ParseState.LINE and depth > self.state.indent:
+        content = line[depth:]
+        if (self.state.parse_state != ParseState.LINE and depth > self.state.indent) \
+                or content.strip() == '':
             depth = self.state.indent
         parent = self._find_parent_line(root, depth)
         if parent is None:
@@ -61,25 +63,25 @@ class Parser(object):
             if self.state.parse_state == ParseState.QUOTE:
                 quoteelem = parent.child_elements[-1]
                 assert(type(quoteelem) == QuoteElement)
-                quoteelem.child_lines.append(self._parse_str(quoteelem, line[depth:], iline, depth, parser_warnings))
+                quoteelem.child_lines.append(self._parse_str(quoteelem, content, iline, depth, parser_warnings))
                 return
             elif self.state.parse_state in [ParseState.CODE, ParseState.MATH]:
                 blockelem = parent.child_elements[-1]
                 assert(type(blockelem) in [MathElement, CodeElement])
                 blockelem.child_lines.append(TextElement(parent=weakref.proxy(blockelem),
-                                                         content=line[depth:],
+                                                         content=content,
                                                          renderer=self.renderer))
                 return
             else:
                 blockelem = parent.child_elements[-1]
                 assert(type(blockelem) in [TableElement])
-                blockelem.rows.append([self._parse_str(blockelem, t, iline, depth, parser_warnings) for t in line[depth:].split('\t')])
+                blockelem.rows.append([self._parse_str(blockelem, t, iline, depth, parser_warnings) for t in content.split('\t')])
                 return
 
         line_elem = LineElement(parent=weakref.proxy(parent),
                                 renderer=self.renderer)
 
-        parsed_elem = self._parse_str(parent, line[depth:], iline, depth, parser_warnings)
+        parsed_elem = self._parse_str(parent, content, iline, depth, parser_warnings)
 
         if type(parsed_elem) is QuoteElement:
             self.state = State(ParseState.QUOTE, depth + 1)

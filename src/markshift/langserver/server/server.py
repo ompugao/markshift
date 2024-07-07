@@ -94,7 +94,7 @@ def retrieve_asset(name, dir='assets'):
 
         assets_path = os.path.join(sys._MEIPASS, dir)
     else:
-        assets_path = str(pathlib.Path( __file__ ).parent.parent.parent.parent.parent.absolute() / dir)
+        assets_path = str(pathlib.Path( __file__ ).parent.parent.parent.absolute() / dir)
     return os.path.join(assets_path, name)
 
 class MarkshiftLanguageServer(LanguageServer):
