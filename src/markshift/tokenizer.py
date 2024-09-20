@@ -95,7 +95,7 @@ grammar = """
     WIKILINKCHARS: WIKILINKCHAR+
     // URLTITLECHAR: /[^\[:\]\/]/
     // URLTITLECHARS: URLTITLECHAR+
-    URL: /\w+:\/\/[\w\/:%#\$&\?\!\(\)~\.=\+\-\:]+/
+    URL: /\w+:\/\/[\w\/:%#\$&\?\!\(\)~\.=\+\-\:@]+/
     %import common.WS_INLINE
     %import common.ESCAPED_STRING
     %import common.NUMBER
