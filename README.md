@@ -47,6 +47,8 @@ Math with katex
 ```
 ## installation
 Python >=3.9 is required.
+
+Please run the following:
 ```sh
 git clone https://github.com/ompugao/markshift
 cd markshift/src/markshift/langserver
@@ -55,6 +57,12 @@ npm run frontend:prod
 cd -
 pip3 install -e markshift[languageserver]
 ```
+
+or use `uv`:
+```sh
+uv tool install https://github.com/ompugao/markshift
+# then `markshift_cli`(console app) and `msls`(lsp server) command will be availabe
+
 
 ## console app
 ```sh
