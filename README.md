@@ -1,4 +1,7 @@
 # Markshift
+
+Please use [ompugao/patto](https://github.com/ompugao/patto) instead. That is written in Rust and faster.
+
 This is an yet another markup language, <del>makeshift</del> markshift.
 
 Please see this video (at 2x speed):
